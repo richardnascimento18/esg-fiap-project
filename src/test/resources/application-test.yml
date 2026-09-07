@@ -1,0 +1,9 @@
+spring:
+  data:
+    mongodb:
+      database: ecocity_esg_test
+
+app:
+  license-alert:
+    # Tests invoke the use case explicitly with a fixed clock.
+    cron: "-"

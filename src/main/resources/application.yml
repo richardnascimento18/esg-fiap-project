@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: ecocity-esg
+  profiles:
+    active: dev
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: 8080
+  undertow:
+    threads:
+      # Fixed sizing requested by the assignment: applies to both the "dev" and
+      # "test" profiles.
+      io: 2
+      worker: 10
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+  api-docs:
+    path: /v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    com.ecocity.esg: INFO

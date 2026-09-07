@@ -1,0 +1,10 @@
+spring:
+  data:
+    mongodb:
+      # Points at the MongoDB container started by docker-compose.yml
+      uri: mongodb://ecocity:ecocity_secret@localhost:27017/ecocity_esg?authSource=admin
+      database: ecocity_esg
+
+app:
+  license-alert:
+    cron: "0 0 6 * * *"

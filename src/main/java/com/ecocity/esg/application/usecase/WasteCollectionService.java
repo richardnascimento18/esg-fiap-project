@@ -1,0 +1,54 @@
+package com.ecocity.esg.application.usecase;
+
+import com.ecocity.esg.application.port.in.WasteCollectionUseCase;
+import com.ecocity.esg.application.port.out.WasteCollectionRepositoryPort;
+import com.ecocity.esg.domain.exception.ResourceNotFoundException;
+import com.ecocity.esg.domain.model.WasteCollection;
+
+import java.util.List;
+
+public class WasteCollectionService implements WasteCollectionUseCase {
+
+    private static final String RESOURCE_NAME = "WasteCollection";
+
+    private final WasteCollectionRepositoryPort repositoryPort;
+
+    public WasteCollectionService(WasteCollectionRepositoryPort repositoryPort) {
+        this.repositoryPort = repositoryPort;
+    }
+
+    @Override
+    public WasteCollection create(WasteCollection wasteCollection) {
+        return repositoryPort.save(wasteCollection.forCreation());
+    }
+
+    @Override
+    public WasteCollection update(String id, WasteCollection wasteCollection) {
+        wasteCollection.validate();
+        WasteCollection existing = findById(id);
+        return repositoryPort.save(existing.updateWith(wasteCollection));
+    }
+
+    @Override
+    public void delete(String id) {
+        assertExists(id);
+        repositoryPort.deleteById(id);
+    }
+
+    @Override
+    public WasteCollection findById(String id) {
+        return repositoryPort.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(RESOURCE_NAME, id));
+    }
+
+    @Override
+    public List<WasteCollection> findAll(int page, int size) {
+        return repositoryPort.findAll(page, size);
+    }
+
+    private void assertExists(String id) {
+        if (!repositoryPort.existsById(id)) {
+            throw new ResourceNotFoundException(RESOURCE_NAME, id);
+        }
+    }
+}
