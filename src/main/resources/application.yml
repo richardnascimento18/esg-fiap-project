@@ -1,8 +1,9 @@
 spring:
   application:
     name: ecocity-esg
-  profiles:
-    active: dev
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/ecocity_esg}
   jackson:
     default-property-inclusion: non_null
     serialization:
@@ -10,6 +11,7 @@ spring:
 
 server:
   port: 8080
+  shutdown: graceful
   undertow:
     threads:
       # Fixed sizing requested by the assignment: applies to both the "dev" and
@@ -25,6 +27,11 @@ springdoc:
     path: /v3/api-docs
 
 management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
   endpoints:
     web:
       exposure:
@@ -33,3 +40,7 @@ management:
 logging:
   level:
     com.ecocity.esg: INFO
+
+app:
+  license-alert:
+    cron: "${APP_LICENSE_ALERT_CRON:-}"

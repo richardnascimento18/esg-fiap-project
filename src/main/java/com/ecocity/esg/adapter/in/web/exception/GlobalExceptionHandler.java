@@ -5,6 +5,12 @@ import com.ecocity.esg.domain.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DuplicateKeyException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,6 +21,7 @@ import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ApiResponse(responseCode = "404", description = "Registro não encontrado")
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -37,10 +44,22 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "Erro de validacao nos campos enviados", request, details);
     }
 
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class,
+            ConstraintViolationException.class, IllegalArgumentException.class})
+    public ResponseEntity<ApiErrorResponse> handleInvalidInput(Exception ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, "Requisicao invalida", request, null);
+    }
+
+    @ExceptionHandler(DuplicateKeyException.class)
+    public ResponseEntity<ApiErrorResponse> handleDuplicate(DuplicateKeyException ex, HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "Registro ja existente", request, null);
+    }
+
     @ApiResponse(responseCode = "500", description = "Erro interno inesperado")
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno inesperado: " + ex.getMessage(), request, null);
+        log.error("Unexpected error on {} {}", request.getMethod(), request.getRequestURI(), ex);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno inesperado", request, null);
     }
 
     private ResponseEntity<ApiErrorResponse> build(HttpStatus status, String message, HttpServletRequest request, List<String> details) {

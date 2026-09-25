@@ -2,9 +2,10 @@ spring:
   data:
     mongodb:
       # Points at the MongoDB container started by docker-compose.yml
-      uri: mongodb://ecocity:ecocity_secret@localhost:27017/ecocity_esg?authSource=admin
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/ecocity_esg}
       database: ecocity_esg
 
 app:
+  seed-demo-data: ${APP_SEED_DEMO_DATA:false}
   license-alert:
     cron: "0 0 6 * * *"

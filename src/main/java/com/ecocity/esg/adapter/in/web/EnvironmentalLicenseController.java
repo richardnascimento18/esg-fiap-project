@@ -7,12 +7,16 @@ import com.ecocity.esg.application.port.in.EnvironmentalLicenseUseCase;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@Validated
 @RequestMapping("/api/v1/environmental-licenses")
 @Tag(name = "Environmental License", description = "Controle de licenças ambientais e alertas de renovação (pilar Governanca)")
 public class EnvironmentalLicenseController {
@@ -35,8 +39,8 @@ public class EnvironmentalLicenseController {
     @Operation(summary = "Listar registros de licença ambiental",
             description = "Retorna uma lista JSON. A primeira página é 0; o tamanho padrão é 20.")
     @GetMapping
-    public List<EnvironmentalLicenseResponse> findAll(@RequestParam(defaultValue = "0") int page,
-                                                       @RequestParam(defaultValue = "20") int size) {
+    public List<EnvironmentalLicenseResponse> findAll(@RequestParam(defaultValue = "0") @Min(0) int page,
+                                                       @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return useCase.findAll(page, size).stream().map(mapper::toResponse).toList();
     }
 

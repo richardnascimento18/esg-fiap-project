@@ -56,11 +56,21 @@ class ApiErrorContractTest {
     }
 
     @Test
-    void malformedJsonRetainsTheExistingGenericErrorStatus() throws Exception {
-        // Compatibility characterization: changing this to 400 is a separate API change.
+    void malformedJsonReturnsBadRequest() throws Exception {
         mvc.perform(post("/api/v1/energy-consumptions").contentType("application/json").content("{"))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.status").value(500))
-                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.startsWith("Erro interno inesperado: ")));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Requisicao invalida"));
+    }
+
+    @Test
+    void invalidEnumAndPaginationReturnBadRequest() throws Exception {
+        mvc.perform(post("/api/v1/energy-consumptions").contentType("application/json")
+                .content("{\"sourceType\":\"UNKNOWN\"}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/v1/energy-consumptions?page=-1"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/v1/energy-consumptions?size=101"))
+                .andExpect(status().isBadRequest());
     }
 }

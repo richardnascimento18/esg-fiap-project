@@ -5,6 +5,7 @@ import com.ecocity.esg.adapter.out.persistence.mongodb.repository.EnergyConsumpt
 import com.ecocity.esg.application.port.out.EnergyConsumptionRepositoryPort;
 import com.ecocity.esg.domain.model.EnergyConsumption;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -34,7 +35,7 @@ public class EnergyConsumptionRepositoryAdapter implements EnergyConsumptionRepo
 
     @Override
     public List<EnergyConsumption> findAll(int page, int size) {
-        return mongoRepository.findAll(PageRequest.of(page, size))
+        return mongoRepository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()))
                 .map(mapper::toDomain)
                 .getContent();
     }
