@@ -73,4 +73,12 @@ class ApiErrorContractTest {
         mvc.perform(get("/api/v1/energy-consumptions?size=101"))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void requestIdIsReturnedAndUnsafeValuesAreReplaced() throws Exception {
+        mvc.perform(get("/api/v1/energy-consumptions").header("X-Request-ID", "known-123"))
+                .andExpect(header().string("X-Request-ID", "known-123"));
+        mvc.perform(get("/api/v1/energy-consumptions").header("X-Request-ID", "invalid value"))
+                .andExpect(header().string("X-Request-ID", org.hamcrest.Matchers.not("invalid value")));
+    }
 }

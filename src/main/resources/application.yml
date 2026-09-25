@@ -38,6 +38,8 @@ management:
         include: health,info
 
 logging:
+  pattern:
+    level: "%5p [requestId:%X{requestId:-}]"
   level:
     com.ecocity.esg: INFO
 

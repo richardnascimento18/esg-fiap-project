@@ -4,6 +4,7 @@ import com.ecocity.esg.adapter.in.web.*;
 import com.ecocity.esg.adapter.in.web.mapper.*;
 import com.ecocity.esg.adapter.in.web.exception.GlobalExceptionHandler;
 import com.ecocity.esg.adapter.in.web.config.OpenApiConfig;
+import com.ecocity.esg.adapter.in.web.config.RequestIdFilter;
 import com.ecocity.esg.application.port.out.*;
 import com.ecocity.esg.domain.model.*;
 import com.ecocity.esg.infrastructure.config.ApplicationConfiguration;
@@ -33,6 +34,7 @@ import static org.mockito.Mockito.*;
 @EnableAutoConfiguration(exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class,
         MongoRepositoriesAutoConfiguration.class})
 @Import({ApplicationConfiguration.class, OpenApiConfig.class, GlobalExceptionHandler.class,
+        RequestIdFilter.class,
         EnergyConsumptionController.class, EnergyConsumptionWebMapper.class,
         WasteCollectionController.class, WasteCollectionWebMapper.class,
         CarbonEmissionController.class, CarbonEmissionWebMapper.class,
