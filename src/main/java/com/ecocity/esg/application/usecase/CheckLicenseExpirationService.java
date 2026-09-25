@@ -32,10 +32,8 @@ public class CheckLicenseExpirationService implements CheckLicenseExpirationUseC
         int page = 0;
         List<EnvironmentalLicense> licenses;
         do {
-            licenses = repository.findAll(page++, PAGE_SIZE);
-            licenses.stream()
-                    .filter(license -> license.requiresRenewalBefore(deadline))
-                    .forEach(alerts::notifyRenewalRequired);
+            licenses = repository.findRenewalCandidatesBefore(deadline, page++, PAGE_SIZE);
+            licenses.forEach(alerts::notifyRenewalRequired);
         } while (licenses.size() == PAGE_SIZE);
     }
 }

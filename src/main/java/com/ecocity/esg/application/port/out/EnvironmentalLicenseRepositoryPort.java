@@ -4,6 +4,7 @@ import com.ecocity.esg.domain.model.EnvironmentalLicense;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.Instant;
 
 public interface EnvironmentalLicenseRepositoryPort {
 
@@ -12,6 +13,8 @@ public interface EnvironmentalLicenseRepositoryPort {
     Optional<EnvironmentalLicense> findById(String id);
 
     List<EnvironmentalLicense> findAll(int page, int size);
+
+    List<EnvironmentalLicense> findRenewalCandidatesBefore(Instant deadline, int page, int size);
 
     void deleteById(String id);
 

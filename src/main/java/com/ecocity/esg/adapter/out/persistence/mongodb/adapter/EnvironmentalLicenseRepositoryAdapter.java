@@ -4,12 +4,14 @@ import com.ecocity.esg.adapter.out.persistence.mongodb.mapper.EnvironmentalLicen
 import com.ecocity.esg.adapter.out.persistence.mongodb.repository.EnvironmentalLicenseMongoRepository;
 import com.ecocity.esg.application.port.out.EnvironmentalLicenseRepositoryPort;
 import com.ecocity.esg.domain.model.EnvironmentalLicense;
+import com.ecocity.esg.domain.model.LicenseStatus;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.Instant;
 
 @Component
 public class EnvironmentalLicenseRepositoryAdapter implements EnvironmentalLicenseRepositoryPort {
@@ -38,6 +40,12 @@ public class EnvironmentalLicenseRepositoryAdapter implements EnvironmentalLicen
         return mongoRepository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()))
                 .map(mapper::toDomain)
                 .getContent();
+    }
+
+    @Override
+    public List<EnvironmentalLicense> findRenewalCandidatesBefore(Instant deadline, int page, int size) {
+        return mongoRepository.findByExpirationDateBeforeAndStatusNot(deadline, LicenseStatus.SUSPENDED,
+                PageRequest.of(page, size, Sort.by("id").ascending())).stream().map(mapper::toDomain).toList();
     }
 
     @Override
