@@ -10,6 +10,7 @@ import org.testcontainers.containers.MongoDBContainer;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@org.springframework.security.test.context.support.WithMockUser(roles = "ADMIN")
 public abstract class MongoIntegrationTest {
 
     // JVM-scoped lifecycle keeps cached Spring contexts connected to the same container.

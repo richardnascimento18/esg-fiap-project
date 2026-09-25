@@ -4,6 +4,13 @@ spring:
       database: ecocity_esg_test
 
 app:
+  security:
+    editor:
+      username: test-editor
+      password: test-editor-password
+    admin:
+      username: test-admin
+      password: test-admin-password
   license-alert:
     # Tests invoke the use case explicitly with a fixed clock.
     cron: "-"

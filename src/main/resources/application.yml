@@ -48,5 +48,12 @@ logging:
     com.ecocity.esg: INFO
 
 app:
+  security:
+    editor:
+      username: ${APP_EDITOR_USERNAME}
+      password: ${APP_EDITOR_PASSWORD}
+    admin:
+      username: ${APP_ADMIN_USERNAME}
+      password: ${APP_ADMIN_PASSWORD}
   license-alert:
     cron: "${APP_LICENSE_ALERT_CRON:-}"

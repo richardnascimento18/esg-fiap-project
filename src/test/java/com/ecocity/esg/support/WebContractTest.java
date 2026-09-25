@@ -14,5 +14,6 @@ import java.lang.annotation.Target;
 @SpringBootTest(classes = WebContractConfiguration.class)
 @AutoConfigureMockMvc
 @ActiveProfiles({"test", "web-contract"})
+@org.springframework.security.test.context.support.WithMockUser(roles = "ADMIN")
 public @interface WebContractTest {
 }

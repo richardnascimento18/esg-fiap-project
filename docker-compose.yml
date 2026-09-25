@@ -7,6 +7,10 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATA_MONGODB_URI: mongodb://${MONGO_APP_USER:-ecocity_app}:${MONGO_APP_PASSWORD:?Set MONGO_APP_PASSWORD in .env}@mongodb:27017/ecocity_esg?authSource=ecocity_esg
       APP_SEED_DEMO_DATA: ${APP_SEED_DEMO_DATA:-false}
+      APP_EDITOR_USERNAME: ${APP_EDITOR_USERNAME:-editor}
+      APP_EDITOR_PASSWORD: ${APP_EDITOR_PASSWORD:?Set APP_EDITOR_PASSWORD in .env}
+      APP_ADMIN_USERNAME: ${APP_ADMIN_USERNAME:-admin}
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD:?Set APP_ADMIN_PASSWORD in .env}
       APP_LICENSE_ALERT_CRON: "-"
     depends_on:
       mongodb:
