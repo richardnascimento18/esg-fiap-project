@@ -37,7 +37,7 @@ import java.util.Map;
  * already has data, so restarting the container never creates duplicates.
  */
 @Component
-@Profile("dev")
+@Profile("dev & !staging & !prod & !production")
 @ConditionalOnProperty(name = "app.seed-demo-data", havingValue = "true")
 @Order(2)
 public class DataSeeder implements ApplicationRunner {
