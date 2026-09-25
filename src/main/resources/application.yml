@@ -31,6 +31,10 @@ management:
     health:
       probes:
         enabled: true
+      group:
+        readiness:
+          include: readinessState,mongo
+      validate-group-membership: false
       show-details: never
   endpoints:
     web:
