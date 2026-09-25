@@ -52,10 +52,17 @@ public final class EnergyConsumption {
     }
 
     public EnergyConsumption forCreation() {
+        validate();
         return toBuilder().id(null).alertTriggered(consumptionKwh > thresholdKwh).build();
     }
 
     public EnergyConsumption updateWith(EnergyConsumption replacement) {
+        replacement.validate();
         return replacement.toBuilder().id(id).alertTriggered(replacement.consumptionKwh > replacement.thresholdKwh).build();
+    }
+
+    public void validate() {
+        DomainRules.nonNegative(consumptionKwh, "consumptionKwh");
+        DomainRules.nonNegative(thresholdKwh, "thresholdKwh");
     }
 }

@@ -40,10 +40,18 @@ public final class CarbonEmission {
     }
 
     public CarbonEmission forCreation() {
+        validate();
         return toBuilder().id(null).compensated(compensationTonnes >= emissionTonnes).build();
     }
 
     public CarbonEmission updateWith(CarbonEmission replacement) {
+        replacement.validate();
         return replacement.toBuilder().id(id).compensated(replacement.compensationTonnes >= replacement.emissionTonnes).build();
+    }
+
+    public void validate() {
+        DomainRules.nonNegative(emissionTonnes, "emissionTonnes");
+        DomainRules.nonNegative(compensationTonnes, "compensationTonnes");
+        DomainRules.reportingQuarter(reportingPeriod);
     }
 }

@@ -52,25 +52,37 @@ public final class EnvironmentalLicense {
 
     public EnvironmentalLicense forCreation(Instant now) {
         validate();
-        return toBuilder().id(null).status(statusAt(now)).build();
+        return toBuilder().id(null).status(effectiveStatusAt(now)).build();
     }
 
     public EnvironmentalLicense updateWith(EnvironmentalLicense replacement, Instant now) {
         replacement.validate();
-        return replacement.toBuilder().id(id).status(replacement.statusAt(now)).build();
+        LicenseStatus retained = status == LicenseStatus.SUSPENDED || status == LicenseStatus.RENEWAL_IN_PROGRESS
+                ? status : LicenseStatus.ACTIVE;
+        return replacement.toBuilder().id(id).status(retained).build().withEffectiveStatusAt(now);
     }
 
     public void validate() {
+        if (issueDate == null || expirationDate == null) {
+            throw new DomainValidationException("issueDate e expirationDate sao obrigatorios");
+        }
         if (expirationDate.isBefore(issueDate)) {
             throw new DomainValidationException("expirationDate nao pode ser anterior a issueDate");
         }
     }
 
-    private LicenseStatus statusAt(Instant now) {
+    public LicenseStatus effectiveStatusAt(Instant now) {
         if (status == LicenseStatus.SUSPENDED) {
             return LicenseStatus.SUSPENDED;
         }
-        return now.isAfter(expirationDate) ? LicenseStatus.EXPIRED : LicenseStatus.ACTIVE;
+        if (now.isAfter(expirationDate)) {
+            return LicenseStatus.EXPIRED;
+        }
+        return status == LicenseStatus.RENEWAL_IN_PROGRESS ? LicenseStatus.RENEWAL_IN_PROGRESS : LicenseStatus.ACTIVE;
+    }
+
+    public EnvironmentalLicense withEffectiveStatusAt(Instant now) {
+        return toBuilder().status(effectiveStatusAt(now)).build();
     }
 
     public boolean requiresRenewalBefore(Instant deadline) {

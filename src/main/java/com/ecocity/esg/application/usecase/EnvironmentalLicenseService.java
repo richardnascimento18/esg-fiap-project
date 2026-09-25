@@ -28,7 +28,8 @@ public class EnvironmentalLicenseService implements EnvironmentalLicenseUseCase 
     @Override
     public EnvironmentalLicense update(String id, EnvironmentalLicense environmentalLicense) {
         environmentalLicense.validate();
-        EnvironmentalLicense existing = findById(id);
+        EnvironmentalLicense existing = repositoryPort.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(RESOURCE_NAME, id));
         return repositoryPort.save(existing.updateWith(environmentalLicense, clock.instant()));
     }
 
@@ -41,12 +42,14 @@ public class EnvironmentalLicenseService implements EnvironmentalLicenseUseCase 
     @Override
     public EnvironmentalLicense findById(String id) {
         return repositoryPort.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(RESOURCE_NAME, id));
+                .orElseThrow(() -> new ResourceNotFoundException(RESOURCE_NAME, id))
+                .withEffectiveStatusAt(clock.instant());
     }
 
     @Override
     public List<EnvironmentalLicense> findAll(int page, int size) {
-        return repositoryPort.findAll(page, size);
+        return repositoryPort.findAll(page, size).stream()
+                .map(license -> license.withEffectiveStatusAt(clock.instant())).toList();
     }
 
     private void assertExists(String id) {

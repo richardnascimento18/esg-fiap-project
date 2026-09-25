@@ -53,8 +53,7 @@ public final class WasteCollection {
     }
 
     public void validate() {
-        if (recyclingRatePercentage < 0 || recyclingRatePercentage > 100) {
-            throw new DomainValidationException("recyclingRatePercentage deve estar entre 0 e 100");
-        }
+        DomainRules.nonNegative(weightKg, "weightKg");
+        DomainRules.percentage(recyclingRatePercentage, "recyclingRatePercentage");
     }
 }

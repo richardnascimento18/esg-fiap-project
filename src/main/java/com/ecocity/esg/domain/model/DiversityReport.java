@@ -54,13 +54,13 @@ public final class DiversityReport {
     }
 
     public void validate() {
-        if (isOutOfRange(womenPercentage) || isOutOfRange(blackAndMixedRacePercentage)
-                || isOutOfRange(personsWithDisabilitiesPercentage) || isOutOfRange(lgbtqiaPercentage)) {
-            throw new DomainValidationException("Todos os percentuais de diversidade devem estar entre 0 e 100");
+        if (totalEmployees < 0) {
+            throw new DomainValidationException("totalEmployees deve ser nao negativo");
         }
-    }
-
-    private static boolean isOutOfRange(double value) {
-        return value < 0 || value > 100;
+        DomainRules.percentage(womenPercentage, "womenPercentage");
+        DomainRules.percentage(blackAndMixedRacePercentage, "blackAndMixedRacePercentage");
+        DomainRules.percentage(personsWithDisabilitiesPercentage, "personsWithDisabilitiesPercentage");
+        DomainRules.percentage(lgbtqiaPercentage, "lgbtqiaPercentage");
+        DomainRules.reportingMonth(reportingMonth);
     }
 }
