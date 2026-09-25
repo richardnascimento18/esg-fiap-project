@@ -1,34 +1,42 @@
 services:
   api:
-    profiles: ["app"]
     build: .
     ports:
-      - "8080:8080"
+      - "${API_PORT:-8080}:8080"
     environment:
       SPRING_PROFILES_ACTIVE: dev
-      SPRING_DATA_MONGODB_URI: mongodb://ecocity:ecocity_secret@mongodb:27017/ecocity_esg?authSource=admin
-      SPRING_DATA_MONGODB_DATABASE: ecocity_esg
+      SPRING_DATA_MONGODB_URI: mongodb://${MONGO_APP_USER:-ecocity_app}:${MONGO_APP_PASSWORD:?Set MONGO_APP_PASSWORD in .env}@mongodb:27017/ecocity_esg?authSource=ecocity_esg
+      APP_SEED_DEMO_DATA: ${APP_SEED_DEMO_DATA:-false}
+      APP_LICENSE_ALERT_CRON: "-"
     depends_on:
       mongodb:
         condition: service_healthy
+    networks:
+      - ecocity
 
   mongodb:
     image: mongo:7.0
-    container_name: ecocity-esg-mongodb
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ecocity
-      MONGO_INITDB_ROOT_PASSWORD: ecocity_secret
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-ecocity_root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD in .env}
+      MONGO_APP_USER: ${MONGO_APP_USER:-ecocity_app}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:?Set MONGO_APP_PASSWORD in .env}
       MONGO_INITDB_DATABASE: ecocity_esg
+    ports:
+      - "127.0.0.1:${MONGO_PORT:-27017}:27017"
     volumes:
       - mongodb_data:/data/db
+      - ./docker/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - ecocity
 
 volumes:
   mongodb_data:
+
+networks:
+  ecocity:
