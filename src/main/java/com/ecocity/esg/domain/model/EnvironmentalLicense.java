@@ -85,7 +85,4 @@ public final class EnvironmentalLicense {
         return toBuilder().status(effectiveStatusAt(now)).build();
     }
 
-    public boolean requiresRenewalBefore(Instant deadline) {
-        return status != LicenseStatus.SUSPENDED && expirationDate.isBefore(deadline);
-    }
 }

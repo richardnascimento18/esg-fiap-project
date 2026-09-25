@@ -1,6 +1,5 @@
 package com.ecocity.esg.domain.model;
 
-import com.ecocity.esg.domain.exception.DomainValidationException;
 import lombok.Builder;
 import lombok.Getter;
 
