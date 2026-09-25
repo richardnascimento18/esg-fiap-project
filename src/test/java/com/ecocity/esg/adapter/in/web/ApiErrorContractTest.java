@@ -81,4 +81,14 @@ class ApiErrorContractTest {
         mvc.perform(get("/api/v1/energy-consumptions").header("X-Request-ID", "invalid value"))
                 .andExpect(header().string("X-Request-ID", org.hamcrest.Matchers.not("invalid value")));
     }
+
+    @Test
+    void unsupportedMethodsAndMediaTypesKeepHttpSemantics() throws Exception {
+        mvc.perform(patch("/api/v1/energy-consumptions/missing"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.status").value(405));
+        mvc.perform(post("/api/v1/energy-consumptions").contentType("text/plain").content("invalid"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.status").value(415));
+    }
 }

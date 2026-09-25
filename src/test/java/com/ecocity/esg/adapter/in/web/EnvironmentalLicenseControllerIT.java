@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -61,5 +62,23 @@ class EnvironmentalLicenseControllerIT extends MongoIntegrationTest {
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void duplicateLicenseNumberReturnsConflictWithoutDatabaseDetails() throws Exception {
+        EnvironmentalLicenseRequest request = EnvironmentalLicenseRequest.builder()
+                .licenseNumber("LIC-DUP-" + UUID.randomUUID())
+                .facility("Aterro Sanitario")
+                .licenseType(LicenseType.OPERATION)
+                .issueDate(Instant.now().minus(1, ChronoUnit.DAYS))
+                .expirationDate(Instant.now().plus(30, ChronoUnit.DAYS))
+                .issuingAuthority("CETESB")
+                .build();
+        String body = objectMapper.writeValueAsString(request);
+        mockMvc.perform(post(BASE_URL).contentType("application/json").content(body))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post(BASE_URL).contentType("application/json").content(body))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message", is("Registro ja existente")));
     }
 }
