@@ -1,0 +1,3 @@
+# Optional overrides. No credentials or connection strings belong here.
+subscription_id = "00000000-0000-0000-0000-000000000000" # Replace locally; never commit the real value.
+# bootstrap_image_digest = "sha256:a2c140d39ddb69dceabf50843dee5500f3ffe2f25d4efce2d3650f2743ef0569"
