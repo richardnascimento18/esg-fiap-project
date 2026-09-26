@@ -36,11 +36,11 @@ resource "azurerm_user_assigned_identity" "deploy" {
 }
 
 resource "azurerm_federated_identity_credential" "github" {
-  name      = "github-${var.environment}-environment"
-  parent_id = azurerm_user_assigned_identity.deploy.id
-  issuer    = "https://token.actions.githubusercontent.com"
-  audience  = ["api://AzureADTokenExchange"]
-  subject   = "repo:richardnascimento18/esg-fiap-project:environment:${var.environment}"
+  name                      = "github-${var.environment}-environment"
+  user_assigned_identity_id = azurerm_user_assigned_identity.deploy.id
+  issuer                    = "https://token.actions.githubusercontent.com"
+  audience                  = ["api://AzureADTokenExchange"]
+  subject                   = "repo:richardnascimento18/esg-fiap-project:environment:${var.environment}"
 }
 
 resource "azurerm_key_vault" "app" {
@@ -91,6 +91,11 @@ resource "azurerm_container_app_environment" "app" {
   resource_group_name        = var.resource_group_name
   log_analytics_workspace_id = var.log_analytics_workspace_id
   tags                       = var.tags
+
+  workload_profile {
+    name                  = "Consumption"
+    workload_profile_type = "Consumption"
+  }
 }
 
 resource "azurerm_container_app" "app" {
