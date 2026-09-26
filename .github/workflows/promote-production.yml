@@ -1,0 +1,63 @@
+name: Promote tested staging artifact
+
+on:
+  pull_request:
+    branches: [production]
+    types: [closed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-promotion
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Promote existing GHCR manifest
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.ref == 'staging' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      packages: write
+    steps:
+      - name: Confirm staging publication and compute image
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          runs=$(gh api --method GET "repos/$GITHUB_REPOSITORY/actions/workflows/publish-staging.yml/runs" \
+            -f head_sha="$SOURCE_SHA" -f branch=staging -f event=push -f status=success)
+          jq -e --arg sha "$SOURCE_SHA" \
+            '[.workflow_runs[] | select(.head_sha == $sha and .conclusion == "success")] | length > 0' \
+            <<< "$runs" >/dev/null
+          echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+      - name: Alias exact existing manifest and verify digest
+        env:
+          IMAGE: ${{ steps.source.outputs.image }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          immutable="$IMAGE:sha-$SOURCE_SHA"
+          alias="$IMAGE:production"
+          source_digest=$(docker buildx imagetools inspect "$immutable" --format '{{json .Manifest}}' | jq -er .digest)
+          [[ "$source_digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          docker buildx imagetools create --prefer-index=false --tag "$alias" "$IMAGE@$source_digest"
+          production_digest=$(docker buildx imagetools inspect "$alias" --format '{{json .Manifest}}' | jq -er .digest)
+          test "$source_digest" = "$production_digest"
+          printf '### Production artifact promotion\n\n- Staging source commit: `%s`\n- Immutable image: `%s`\n- Source digest: `%s`\n- Production alias: `%s`\n- Production digest: `%s`\n- Digest equality: **true**\n' \
+            "$SOURCE_SHA" "$immutable" "$source_digest" "$alias" "$production_digest" >> "$GITHUB_STEP_SUMMARY"
