@@ -72,13 +72,13 @@ abstract class AbstractApiContractTest {
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray());
         assertThat(firstPage.isArray()).isTrue();
         assertThat(firstPage.size()).isEqualTo(1);
-        mvc.perform(delete(base + "/{id}", id)).andExpect(status().isNoContent()).andExpect(content().string(""));
+        mvc.perform(delete(base + "/{id}", id).header("If-Match", "\"1\"")).andExpect(status().isNoContent()).andExpect(content().string(""));
         mvc.perform(get(base + "/{id}", id)).andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.path").value(base + "/" + id))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.details").doesNotExist());
-        mvc.perform(delete(base + "/{id}", id)).andExpect(status().isNotFound());
+        mvc.perform(delete(base + "/{id}", id).header("If-Match", "\"1\"")).andExpect(status().isNotFound());
     }
 }

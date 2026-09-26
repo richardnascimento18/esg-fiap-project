@@ -15,6 +15,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import com.ecocity.esg.domain.exception.StaleResourceException;
+import com.ecocity.esg.domain.exception.IdempotencyConflictException;
 import org.springframework.web.server.ResponseStatusException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +66,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(StaleResourceException.class)
     public ResponseEntity<ApiErrorResponse> handleStale(StaleResourceException ex, HttpServletRequest request) {
         return build(HttpStatus.PRECONDITION_FAILED, "Versao desatualizada", request, null);
+    }
+
+    @ExceptionHandler(IdempotencyConflictException.class)
+    public ResponseEntity<ApiErrorResponse> handleIdempotencyConflict(IdempotencyConflictException ex,
+                                                                        HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "Idempotency-Key ja usada com outro conteudo", request, null);
     }
 
     @ExceptionHandler(OptimisticLockingFailureException.class)

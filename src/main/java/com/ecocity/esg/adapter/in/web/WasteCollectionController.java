@@ -13,6 +13,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import com.ecocity.esg.adapter.in.web.config.EntityTags;
+import com.ecocity.esg.adapter.in.web.config.RequestFingerprint;
+import com.ecocity.esg.application.port.in.IdempotencyUseCase;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,17 +28,26 @@ public class WasteCollectionController {
 
     private final WasteCollectionUseCase useCase;
     private final WasteCollectionWebMapper mapper;
+    private final IdempotencyUseCase idempotency;
+    private final ObjectMapper objectMapper;
 
-    public WasteCollectionController(WasteCollectionUseCase useCase, WasteCollectionWebMapper mapper) {
+    public WasteCollectionController(WasteCollectionUseCase useCase, WasteCollectionWebMapper mapper,
+                              IdempotencyUseCase idempotency, ObjectMapper objectMapper) {
         this.useCase = useCase;
         this.mapper = mapper;
+        this.idempotency = idempotency;
+        this.objectMapper = objectMapper;
     }
 
     @Operation(summary = "Cadastrar coleta de resíduos")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<WasteCollectionResponse> create(@Valid @RequestBody WasteCollectionRequest request) {
-        var created = useCase.create(mapper.toDomain(request));
+    public ResponseEntity<WasteCollectionResponse> create(@Valid @RequestBody WasteCollectionRequest request,
+                                         @RequestHeader(value = "Idempotency-Key", required = false) String key) {
+        var domain = mapper.toDomain(request);
+        domain.validate();
+        String id = idempotency.reserve("waste-collections", key, RequestFingerprint.of(request, objectMapper));
+        var created = id == null ? useCase.create(domain) : useCase.createWithId(domain, id);
         return ResponseEntity.status(HttpStatus.CREATED).eTag(EntityTags.forVersion(created.getVersion())).body(mapper.toResponse(created));
     }
 
@@ -66,7 +78,8 @@ public class WasteCollectionController {
     @Operation(summary = "Excluir coleta de resíduos")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable String id) {
-        useCase.delete(id);
+    public void delete(@PathVariable String id,
+                       @RequestHeader(value = "If-Match", required = false) String ifMatch) {
+        useCase.delete(id, EntityTags.requiredVersion(ifMatch));
     }
 }

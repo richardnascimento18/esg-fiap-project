@@ -32,5 +32,10 @@ class ConditionalUpdateTest {
                 .andExpect(status().isOk()).andExpect(header().string("ETag", "\"1\""));
         mvc.perform(put(URL + "/" + id).header("If-Match", "\"0\"").contentType("application/json").content(BODY))
                 .andExpect(status().isPreconditionFailed());
+        mvc.perform(delete(URL + "/" + id)).andExpect(status().isPreconditionRequired());
+        mvc.perform(delete(URL + "/" + id).header("If-Match", "\"0\""))
+                .andExpect(status().isPreconditionFailed());
+        mvc.perform(delete(URL + "/" + id).header("If-Match", "\"1\""))
+                .andExpect(status().isNoContent());
     }
 }

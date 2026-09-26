@@ -3,6 +3,7 @@ package com.ecocity.esg.adapter.out.persistence.mongodb.adapter;
 import com.ecocity.esg.adapter.out.persistence.mongodb.mapper.DiversityReportPersistenceMapper;
 import com.ecocity.esg.adapter.out.persistence.mongodb.repository.DiversityReportMongoRepository;
 import com.ecocity.esg.application.port.out.DiversityReportRepositoryPort;
+import com.ecocity.esg.application.port.out.IdempotencyReservationPort;
 import com.ecocity.esg.domain.model.DiversityReport;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -16,16 +17,25 @@ public class DiversityReportRepositoryAdapter implements DiversityReportReposito
 
     private final DiversityReportMongoRepository mongoRepository;
     private final DiversityReportPersistenceMapper mapper;
+    private final IdempotencyReservationPort reservations;
 
     public DiversityReportRepositoryAdapter(DiversityReportMongoRepository mongoRepository,
-                                             DiversityReportPersistenceMapper mapper) {
+                                             DiversityReportPersistenceMapper mapper, IdempotencyReservationPort reservations) {
         this.mongoRepository = mongoRepository;
         this.mapper = mapper;
+        this.reservations = reservations;
     }
 
     @Override
     public DiversityReport save(DiversityReport diversityReport) {
-        return mapper.toDomain(mongoRepository.save(mapper.toDocument(diversityReport)));
+        try {
+            return mapper.toDomain(mongoRepository.save(mapper.toDocument(diversityReport)));
+        } catch (org.springframework.dao.DuplicateKeyException ex) {
+            if (diversityReport.getId() != null && diversityReport.getId().startsWith("idem-")) {
+                return mongoRepository.findById(diversityReport.getId()).map(mapper::toDomain).orElseThrow(() -> ex);
+            }
+            throw ex;
+        }
     }
 
     @Override
@@ -43,6 +53,12 @@ public class DiversityReportRepositoryAdapter implements DiversityReportReposito
     @Override
     public void deleteById(String id) {
         mongoRepository.deleteById(id);
+    }
+
+    @Override
+    public void delete(DiversityReport diversityReport) {
+        reservations.markDeleted(diversityReport.getId());
+        mongoRepository.delete(mapper.toDocument(diversityReport));
     }
 
     @Override

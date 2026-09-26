@@ -23,6 +23,12 @@ public class WasteCollectionService implements WasteCollectionUseCase {
     }
 
     @Override
+    public WasteCollection createWithId(WasteCollection wasteCollection, String id) {
+        WasteCollection created = wasteCollection.forCreation();
+        return repositoryPort.save(created.toBuilder().id(id).build());
+    }
+
+    @Override
     public WasteCollection update(String id, WasteCollection wasteCollection) {
         wasteCollection.validate();
         WasteCollection existing = findById(id);
@@ -43,6 +49,15 @@ public class WasteCollectionService implements WasteCollectionUseCase {
     public void delete(String id) {
         assertExists(id);
         repositoryPort.deleteById(id);
+    }
+
+    @Override
+    public void delete(String id, long expectedVersion) {
+        WasteCollection existing = findById(id);
+        if (existing.getVersion() == null || existing.getVersion() != expectedVersion) {
+            throw new com.ecocity.esg.domain.exception.StaleResourceException();
+        }
+        repositoryPort.delete(existing);
     }
 
     @Override

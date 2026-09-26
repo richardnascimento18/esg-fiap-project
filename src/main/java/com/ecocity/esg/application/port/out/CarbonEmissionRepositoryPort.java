@@ -15,5 +15,7 @@ public interface CarbonEmissionRepositoryPort {
 
     void deleteById(String id);
 
+    void delete(CarbonEmission carbonEmission);
+
     boolean existsById(String id);
 }

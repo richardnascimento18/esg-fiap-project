@@ -20,6 +20,9 @@ import com.ecocity.esg.application.port.out.LicenseRenewalAlertPort;
 import com.ecocity.esg.application.usecase.CheckLicenseExpirationService;
 import com.ecocity.esg.application.usecase.CoordinatedLicenseExpirationService;
 import com.ecocity.esg.application.port.out.LicenseScanCoordinationPort;
+import com.ecocity.esg.application.port.in.IdempotencyUseCase;
+import com.ecocity.esg.application.port.out.IdempotencyReservationPort;
+import com.ecocity.esg.application.usecase.IdempotencyService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -27,6 +30,11 @@ import java.time.Clock;
 
 @Configuration(proxyBeanMethods = false)
 public class ApplicationConfiguration {
+
+    @Bean
+    public IdempotencyUseCase idempotencyUseCase(IdempotencyReservationPort reservations) {
+        return new IdempotencyService(reservations);
+    }
 
     @Bean
     public Clock clock() {

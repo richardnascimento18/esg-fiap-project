@@ -15,5 +15,7 @@ public interface DiversityReportRepositoryPort {
 
     void deleteById(String id);
 
+    void delete(DiversityReport diversityReport);
+
     boolean existsById(String id);
 }

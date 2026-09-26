@@ -13,6 +13,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import com.ecocity.esg.adapter.in.web.config.EntityTags;
+import com.ecocity.esg.adapter.in.web.config.RequestFingerprint;
+import com.ecocity.esg.application.port.in.IdempotencyUseCase;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,17 +28,26 @@ public class EnvironmentalLicenseController {
 
     private final EnvironmentalLicenseUseCase useCase;
     private final EnvironmentalLicenseWebMapper mapper;
+    private final IdempotencyUseCase idempotency;
+    private final ObjectMapper objectMapper;
 
-    public EnvironmentalLicenseController(EnvironmentalLicenseUseCase useCase, EnvironmentalLicenseWebMapper mapper) {
+    public EnvironmentalLicenseController(EnvironmentalLicenseUseCase useCase, EnvironmentalLicenseWebMapper mapper,
+                              IdempotencyUseCase idempotency, ObjectMapper objectMapper) {
         this.useCase = useCase;
         this.mapper = mapper;
+        this.idempotency = idempotency;
+        this.objectMapper = objectMapper;
     }
 
     @Operation(summary = "Cadastrar licença ambiental")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<EnvironmentalLicenseResponse> create(@Valid @RequestBody EnvironmentalLicenseRequest request) {
-        var created = useCase.create(mapper.toDomain(request));
+    public ResponseEntity<EnvironmentalLicenseResponse> create(@Valid @RequestBody EnvironmentalLicenseRequest request,
+                                         @RequestHeader(value = "Idempotency-Key", required = false) String key) {
+        var domain = mapper.toDomain(request);
+        domain.validate();
+        String id = idempotency.reserve("environmental-licenses", key, RequestFingerprint.of(request, objectMapper));
+        var created = id == null ? useCase.create(domain) : useCase.createWithId(domain, id);
         return ResponseEntity.status(HttpStatus.CREATED).eTag(EntityTags.forVersion(created.getVersion())).body(mapper.toResponse(created));
     }
 
@@ -66,7 +78,8 @@ public class EnvironmentalLicenseController {
     @Operation(summary = "Excluir licença ambiental")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable String id) {
-        useCase.delete(id);
+    public void delete(@PathVariable String id,
+                       @RequestHeader(value = "If-Match", required = false) String ifMatch) {
+        useCase.delete(id, EntityTags.requiredVersion(ifMatch));
     }
 }

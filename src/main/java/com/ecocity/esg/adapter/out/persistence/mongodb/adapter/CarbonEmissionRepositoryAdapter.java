@@ -3,6 +3,7 @@ package com.ecocity.esg.adapter.out.persistence.mongodb.adapter;
 import com.ecocity.esg.adapter.out.persistence.mongodb.mapper.CarbonEmissionPersistenceMapper;
 import com.ecocity.esg.adapter.out.persistence.mongodb.repository.CarbonEmissionMongoRepository;
 import com.ecocity.esg.application.port.out.CarbonEmissionRepositoryPort;
+import com.ecocity.esg.application.port.out.IdempotencyReservationPort;
 import com.ecocity.esg.domain.model.CarbonEmission;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -16,16 +17,25 @@ public class CarbonEmissionRepositoryAdapter implements CarbonEmissionRepository
 
     private final CarbonEmissionMongoRepository mongoRepository;
     private final CarbonEmissionPersistenceMapper mapper;
+    private final IdempotencyReservationPort reservations;
 
     public CarbonEmissionRepositoryAdapter(CarbonEmissionMongoRepository mongoRepository,
-                                            CarbonEmissionPersistenceMapper mapper) {
+                                            CarbonEmissionPersistenceMapper mapper, IdempotencyReservationPort reservations) {
         this.mongoRepository = mongoRepository;
         this.mapper = mapper;
+        this.reservations = reservations;
     }
 
     @Override
     public CarbonEmission save(CarbonEmission carbonEmission) {
-        return mapper.toDomain(mongoRepository.save(mapper.toDocument(carbonEmission)));
+        try {
+            return mapper.toDomain(mongoRepository.save(mapper.toDocument(carbonEmission)));
+        } catch (org.springframework.dao.DuplicateKeyException ex) {
+            if (carbonEmission.getId() != null && carbonEmission.getId().startsWith("idem-")) {
+                return mongoRepository.findById(carbonEmission.getId()).map(mapper::toDomain).orElseThrow(() -> ex);
+            }
+            throw ex;
+        }
     }
 
     @Override
@@ -43,6 +53,12 @@ public class CarbonEmissionRepositoryAdapter implements CarbonEmissionRepository
     @Override
     public void deleteById(String id) {
         mongoRepository.deleteById(id);
+    }
+
+    @Override
+    public void delete(CarbonEmission carbonEmission) {
+        reservations.markDeleted(carbonEmission.getId());
+        mongoRepository.delete(mapper.toDocument(carbonEmission));
     }
 
     @Override

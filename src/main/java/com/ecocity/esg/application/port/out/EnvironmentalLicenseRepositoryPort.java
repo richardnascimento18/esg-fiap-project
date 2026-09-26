@@ -18,5 +18,7 @@ public interface EnvironmentalLicenseRepositoryPort {
 
     void deleteById(String id);
 
+    void delete(EnvironmentalLicense environmentalLicense);
+
     boolean existsById(String id);
 }

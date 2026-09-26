@@ -60,7 +60,7 @@ class WasteCollectionControllerIT extends MongoIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.recyclingRatePercentage", is(40.0)));
 
-        mockMvc.perform(delete(BASE_URL + "/{id}", id))
+        mockMvc.perform(delete(BASE_URL + "/{id}", id).header("If-Match", "\"1\""))
                 .andExpect(status().isNoContent());
     }
 

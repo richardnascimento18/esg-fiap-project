@@ -68,7 +68,7 @@ class EnergyConsumptionControllerIT extends MongoIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.alertTriggered", is(false)));
 
-        mockMvc.perform(delete(BASE_URL + "/{id}", id))
+        mockMvc.perform(delete(BASE_URL + "/{id}", id).header("If-Match", "\"1\""))
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(get(BASE_URL + "/{id}", id))

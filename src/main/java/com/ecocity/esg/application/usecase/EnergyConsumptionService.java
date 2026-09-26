@@ -23,6 +23,12 @@ public class EnergyConsumptionService implements EnergyConsumptionUseCase {
     }
 
     @Override
+    public EnergyConsumption createWithId(EnergyConsumption energyConsumption, String id) {
+        EnergyConsumption created = energyConsumption.forCreation();
+        return repositoryPort.save(created.toBuilder().id(id).build());
+    }
+
+    @Override
     public EnergyConsumption update(String id, EnergyConsumption energyConsumption) {
         EnergyConsumption existing = findById(id);
         return repositoryPort.save(existing.updateWith(energyConsumption));
@@ -42,6 +48,15 @@ public class EnergyConsumptionService implements EnergyConsumptionUseCase {
     public void delete(String id) {
         assertExists(id);
         repositoryPort.deleteById(id);
+    }
+
+    @Override
+    public void delete(String id, long expectedVersion) {
+        EnergyConsumption existing = findById(id);
+        if (existing.getVersion() == null || existing.getVersion() != expectedVersion) {
+            throw new com.ecocity.esg.domain.exception.StaleResourceException();
+        }
+        repositoryPort.delete(existing);
     }
 
     @Override

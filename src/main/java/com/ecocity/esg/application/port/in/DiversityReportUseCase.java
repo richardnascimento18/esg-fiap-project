@@ -8,11 +8,15 @@ public interface DiversityReportUseCase {
 
     DiversityReport create(DiversityReport diversityReport);
 
+    DiversityReport createWithId(DiversityReport diversityReport, String id);
+
     DiversityReport update(String id, DiversityReport diversityReport);
 
     DiversityReport update(String id, DiversityReport diversityReport, long expectedVersion);
 
     void delete(String id);
+
+    void delete(String id, long expectedVersion);
 
     DiversityReport findById(String id);
 

@@ -15,5 +15,7 @@ public interface WasteCollectionRepositoryPort {
 
     void deleteById(String id);
 
+    void delete(WasteCollection wasteCollection);
+
     boolean existsById(String id);
 }

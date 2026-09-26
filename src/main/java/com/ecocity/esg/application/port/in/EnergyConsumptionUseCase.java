@@ -13,11 +13,15 @@ public interface EnergyConsumptionUseCase {
 
     EnergyConsumption create(EnergyConsumption energyConsumption);
 
+    EnergyConsumption createWithId(EnergyConsumption energyConsumption, String id);
+
     EnergyConsumption update(String id, EnergyConsumption energyConsumption);
 
     EnergyConsumption update(String id, EnergyConsumption energyConsumption, long expectedVersion);
 
     void delete(String id);
+
+    void delete(String id, long expectedVersion);
 
     EnergyConsumption findById(String id);
 

@@ -3,6 +3,7 @@ package com.ecocity.esg.adapter.out.persistence.mongodb.adapter;
 import com.ecocity.esg.adapter.out.persistence.mongodb.mapper.EnergyConsumptionPersistenceMapper;
 import com.ecocity.esg.adapter.out.persistence.mongodb.repository.EnergyConsumptionMongoRepository;
 import com.ecocity.esg.application.port.out.EnergyConsumptionRepositoryPort;
+import com.ecocity.esg.application.port.out.IdempotencyReservationPort;
 import com.ecocity.esg.domain.model.EnergyConsumption;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -16,16 +17,25 @@ public class EnergyConsumptionRepositoryAdapter implements EnergyConsumptionRepo
 
     private final EnergyConsumptionMongoRepository mongoRepository;
     private final EnergyConsumptionPersistenceMapper mapper;
+    private final IdempotencyReservationPort reservations;
 
     public EnergyConsumptionRepositoryAdapter(EnergyConsumptionMongoRepository mongoRepository,
-                                               EnergyConsumptionPersistenceMapper mapper) {
+                                               EnergyConsumptionPersistenceMapper mapper, IdempotencyReservationPort reservations) {
         this.mongoRepository = mongoRepository;
         this.mapper = mapper;
+        this.reservations = reservations;
     }
 
     @Override
     public EnergyConsumption save(EnergyConsumption energyConsumption) {
-        return mapper.toDomain(mongoRepository.save(mapper.toDocument(energyConsumption)));
+        try {
+            return mapper.toDomain(mongoRepository.save(mapper.toDocument(energyConsumption)));
+        } catch (org.springframework.dao.DuplicateKeyException ex) {
+            if (energyConsumption.getId() != null && energyConsumption.getId().startsWith("idem-")) {
+                return mongoRepository.findById(energyConsumption.getId()).map(mapper::toDomain).orElseThrow(() -> ex);
+            }
+            throw ex;
+        }
     }
 
     @Override
@@ -43,6 +53,12 @@ public class EnergyConsumptionRepositoryAdapter implements EnergyConsumptionRepo
     @Override
     public void deleteById(String id) {
         mongoRepository.deleteById(id);
+    }
+
+    @Override
+    public void delete(EnergyConsumption energyConsumption) {
+        reservations.markDeleted(energyConsumption.getId());
+        mongoRepository.delete(mapper.toDocument(energyConsumption));
     }
 
     @Override

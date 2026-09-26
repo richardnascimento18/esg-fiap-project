@@ -19,5 +19,7 @@ public interface EnergyConsumptionRepositoryPort {
 
     void deleteById(String id);
 
+    void delete(EnergyConsumption energyConsumption);
+
     boolean existsById(String id);
 }

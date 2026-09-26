@@ -23,6 +23,12 @@ public class DiversityReportService implements DiversityReportUseCase {
     }
 
     @Override
+    public DiversityReport createWithId(DiversityReport diversityReport, String id) {
+        DiversityReport created = diversityReport.forCreation();
+        return repositoryPort.save(created.toBuilder().id(id).build());
+    }
+
+    @Override
     public DiversityReport update(String id, DiversityReport diversityReport) {
         diversityReport.validate();
         DiversityReport existing = findById(id);
@@ -43,6 +49,15 @@ public class DiversityReportService implements DiversityReportUseCase {
     public void delete(String id) {
         assertExists(id);
         repositoryPort.deleteById(id);
+    }
+
+    @Override
+    public void delete(String id, long expectedVersion) {
+        DiversityReport existing = findById(id);
+        if (existing.getVersion() == null || existing.getVersion() != expectedVersion) {
+            throw new com.ecocity.esg.domain.exception.StaleResourceException();
+        }
+        repositoryPort.delete(existing);
     }
 
     @Override

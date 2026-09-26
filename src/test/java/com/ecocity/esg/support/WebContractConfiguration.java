@@ -54,6 +54,27 @@ public class WebContractConfiguration {
     }
 
     @Bean
+    IdempotencyReservationPort reservations() {
+        Map<String, String> fingerprints = new java.util.concurrent.ConcurrentHashMap<>();
+        return new IdempotencyReservationPort() {
+            @Override
+            public String reserve(String resource, String key, String fingerprint) {
+                String id = "idem-" + resource + "-" + key;
+                String previous = fingerprints.putIfAbsent(id, fingerprint);
+                if (previous != null && !previous.equals(fingerprint)) {
+                    throw new com.ecocity.esg.domain.exception.IdempotencyConflictException();
+                }
+                return id;
+            }
+
+            @Override
+            public void markDeleted(String resourceId) {
+                fingerprints.remove(resourceId);
+            }
+        };
+    }
+
+    @Bean
     EnergyConsumptionRepositoryPort energyConsumptionRepository() {
         var port = mock(EnergyConsumptionRepositoryPort.class);
         var data = new Records<EnergyConsumption>(EnergyConsumption::getId,
@@ -63,6 +84,7 @@ public class WebContractConfiguration {
         when(port.findAll(anyInt(), anyInt())).thenAnswer(call -> data.page(call.getArgument(0), call.getArgument(1)));
         when(port.existsById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)).isPresent());
         doAnswer(call -> { data.remove(call.getArgument(0)); return null; }).when(port).deleteById(anyString());
+        doAnswer(call -> { data.removeValue(call.getArgument(0)); return null; }).when(port).delete(any());
         return port;
     }
 
@@ -76,6 +98,7 @@ public class WebContractConfiguration {
         when(port.findAll(anyInt(), anyInt())).thenAnswer(call -> data.page(call.getArgument(0), call.getArgument(1)));
         when(port.existsById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)).isPresent());
         doAnswer(call -> { data.remove(call.getArgument(0)); return null; }).when(port).deleteById(anyString());
+        doAnswer(call -> { data.removeValue(call.getArgument(0)); return null; }).when(port).delete(any());
         return port;
     }
 
@@ -89,6 +112,7 @@ public class WebContractConfiguration {
         when(port.findAll(anyInt(), anyInt())).thenAnswer(call -> data.page(call.getArgument(0), call.getArgument(1)));
         when(port.existsById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)).isPresent());
         doAnswer(call -> { data.remove(call.getArgument(0)); return null; }).when(port).deleteById(anyString());
+        doAnswer(call -> { data.removeValue(call.getArgument(0)); return null; }).when(port).delete(any());
         return port;
     }
 
@@ -102,6 +126,7 @@ public class WebContractConfiguration {
         when(port.findAll(anyInt(), anyInt())).thenAnswer(call -> data.page(call.getArgument(0), call.getArgument(1)));
         when(port.existsById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)).isPresent());
         doAnswer(call -> { data.remove(call.getArgument(0)); return null; }).when(port).deleteById(anyString());
+        doAnswer(call -> { data.removeValue(call.getArgument(0)); return null; }).when(port).delete(any());
         return port;
     }
 
@@ -115,6 +140,7 @@ public class WebContractConfiguration {
         when(port.findAll(anyInt(), anyInt())).thenAnswer(call -> data.page(call.getArgument(0), call.getArgument(1)));
         when(port.existsById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)).isPresent());
         doAnswer(call -> { data.remove(call.getArgument(0)); return null; }).when(port).deleteById(anyString());
+        doAnswer(call -> { data.removeValue(call.getArgument(0)); return null; }).when(port).delete(any());
         return port;
     }
 
@@ -130,6 +156,7 @@ public class WebContractConfiguration {
 
         T save(T value) {
             String id = Optional.ofNullable(getId.apply(value)).orElseGet(() -> UUID.randomUUID().toString());
+            if (id.startsWith("idem-") && records.containsKey(id)) return records.get(id);
             T stored = withId.apply(value, id);
             records.put(id, stored);
             return stored;
@@ -141,6 +168,10 @@ public class WebContractConfiguration {
 
         List<T> page(int page, int size) {
             return records.values().stream().skip((long) page * size).limit(size).toList();
+        }
+
+        void removeValue(T item) {
+            remove(getId.apply(item));
         }
 
         void remove(String id) {

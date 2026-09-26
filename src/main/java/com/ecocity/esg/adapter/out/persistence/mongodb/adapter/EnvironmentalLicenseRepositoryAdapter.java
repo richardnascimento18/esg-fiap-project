@@ -3,6 +3,7 @@ package com.ecocity.esg.adapter.out.persistence.mongodb.adapter;
 import com.ecocity.esg.adapter.out.persistence.mongodb.mapper.EnvironmentalLicensePersistenceMapper;
 import com.ecocity.esg.adapter.out.persistence.mongodb.repository.EnvironmentalLicenseMongoRepository;
 import com.ecocity.esg.application.port.out.EnvironmentalLicenseRepositoryPort;
+import com.ecocity.esg.application.port.out.IdempotencyReservationPort;
 import com.ecocity.esg.domain.model.EnvironmentalLicense;
 import com.ecocity.esg.domain.model.LicenseStatus;
 import org.springframework.data.domain.PageRequest;
@@ -18,16 +19,25 @@ public class EnvironmentalLicenseRepositoryAdapter implements EnvironmentalLicen
 
     private final EnvironmentalLicenseMongoRepository mongoRepository;
     private final EnvironmentalLicensePersistenceMapper mapper;
+    private final IdempotencyReservationPort reservations;
 
     public EnvironmentalLicenseRepositoryAdapter(EnvironmentalLicenseMongoRepository mongoRepository,
-                                                  EnvironmentalLicensePersistenceMapper mapper) {
+                                                  EnvironmentalLicensePersistenceMapper mapper, IdempotencyReservationPort reservations) {
         this.mongoRepository = mongoRepository;
         this.mapper = mapper;
+        this.reservations = reservations;
     }
 
     @Override
     public EnvironmentalLicense save(EnvironmentalLicense environmentalLicense) {
-        return mapper.toDomain(mongoRepository.save(mapper.toDocument(environmentalLicense)));
+        try {
+            return mapper.toDomain(mongoRepository.save(mapper.toDocument(environmentalLicense)));
+        } catch (org.springframework.dao.DuplicateKeyException ex) {
+            if (environmentalLicense.getId() != null && environmentalLicense.getId().startsWith("idem-")) {
+                return mongoRepository.findById(environmentalLicense.getId()).map(mapper::toDomain).orElseThrow(() -> ex);
+            }
+            throw ex;
+        }
     }
 
     @Override
@@ -52,6 +62,12 @@ public class EnvironmentalLicenseRepositoryAdapter implements EnvironmentalLicen
     @Override
     public void deleteById(String id) {
         mongoRepository.deleteById(id);
+    }
+
+    @Override
+    public void delete(EnvironmentalLicense environmentalLicense) {
+        reservations.markDeleted(environmentalLicense.getId());
+        mongoRepository.delete(mapper.toDocument(environmentalLicense));
     }
 
     @Override

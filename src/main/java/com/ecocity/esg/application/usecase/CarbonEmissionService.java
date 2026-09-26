@@ -23,6 +23,12 @@ public class CarbonEmissionService implements CarbonEmissionUseCase {
     }
 
     @Override
+    public CarbonEmission createWithId(CarbonEmission carbonEmission, String id) {
+        CarbonEmission created = carbonEmission.forCreation();
+        return repositoryPort.save(created.toBuilder().id(id).build());
+    }
+
+    @Override
     public CarbonEmission update(String id, CarbonEmission carbonEmission) {
         CarbonEmission existing = findById(id);
         return repositoryPort.save(existing.updateWith(carbonEmission));
@@ -42,6 +48,15 @@ public class CarbonEmissionService implements CarbonEmissionUseCase {
     public void delete(String id) {
         assertExists(id);
         repositoryPort.deleteById(id);
+    }
+
+    @Override
+    public void delete(String id, long expectedVersion) {
+        CarbonEmission existing = findById(id);
+        if (existing.getVersion() == null || existing.getVersion() != expectedVersion) {
+            throw new com.ecocity.esg.domain.exception.StaleResourceException();
+        }
+        repositoryPort.delete(existing);
     }
 
     @Override

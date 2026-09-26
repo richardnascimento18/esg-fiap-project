@@ -26,6 +26,12 @@ public class EnvironmentalLicenseService implements EnvironmentalLicenseUseCase 
     }
 
     @Override
+    public EnvironmentalLicense createWithId(EnvironmentalLicense environmentalLicense, String id) {
+        EnvironmentalLicense created = environmentalLicense.forCreation(clock.instant());
+        return repositoryPort.save(created.toBuilder().id(id).build());
+    }
+
+    @Override
     public EnvironmentalLicense update(String id, EnvironmentalLicense environmentalLicense) {
         environmentalLicense.validate();
         EnvironmentalLicense existing = repositoryPort.findById(id)
@@ -47,6 +53,15 @@ public class EnvironmentalLicenseService implements EnvironmentalLicenseUseCase 
     public void delete(String id) {
         assertExists(id);
         repositoryPort.deleteById(id);
+    }
+
+    @Override
+    public void delete(String id, long expectedVersion) {
+        EnvironmentalLicense existing = findById(id);
+        if (existing.getVersion() == null || existing.getVersion() != expectedVersion) {
+            throw new com.ecocity.esg.domain.exception.StaleResourceException();
+        }
+        repositoryPort.delete(existing);
     }
 
     @Override
