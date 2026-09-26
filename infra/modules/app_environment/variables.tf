@@ -17,4 +17,5 @@ variable "mongo_connection_uri" {
 }
 variable "mongo_database" { type = string }
 variable "image" { type = string }
+variable "deployment_role_definition_id" { type = string }
 variable "tags" { type = map(string) }

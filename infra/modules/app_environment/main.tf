@@ -71,7 +71,10 @@ resource "azurerm_role_assignment" "provisioning_secrets" {
 # Azure RBAC data-plane grants can lag behind role assignment completion.
 resource "time_sleep" "vault_rbac" {
   create_duration = "60s"
-  depends_on      = [azurerm_role_assignment.provisioning_secrets]
+  depends_on = [
+    azurerm_role_assignment.provisioning_secrets,
+    azurerm_role_assignment.runtime_secrets,
+  ]
 }
 
 resource "azurerm_key_vault_secret" "app" {
@@ -197,12 +200,12 @@ resource "azurerm_container_app" "app" {
     ignore_changes = [template[0].container[0].image]
   }
 
-  depends_on = [azurerm_role_assignment.runtime_secrets]
+  depends_on = [time_sleep.vault_rbac]
 }
 
 resource "azurerm_role_assignment" "deploy_app" {
-  scope                = azurerm_container_app.app.id
-  role_definition_name = "Container Apps Contributor"
-  principal_id         = azurerm_user_assigned_identity.deploy.principal_id
-  principal_type       = "ServicePrincipal"
+  scope              = azurerm_container_app.app.id
+  role_definition_id = var.deployment_role_definition_id
+  principal_id       = azurerm_user_assigned_identity.deploy.principal_id
+  principal_type     = "ServicePrincipal"
 }
