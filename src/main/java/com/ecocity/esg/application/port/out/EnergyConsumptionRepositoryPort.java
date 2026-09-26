@@ -17,9 +17,6 @@ public interface EnergyConsumptionRepositoryPort {
 
     List<EnergyConsumption> findAll(int page, int size);
 
-    void deleteById(String id);
-
     void delete(EnergyConsumption energyConsumption);
 
-    boolean existsById(String id);
 }

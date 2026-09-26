@@ -48,7 +48,7 @@ public class EnvironmentalLicenseController {
         domain.validate();
         String id = idempotency.reserve("environmental-licenses", key, RequestFingerprint.of(request, objectMapper));
         var created = id == null ? useCase.create(domain) : useCase.createWithId(domain, id);
-        return ResponseEntity.status(HttpStatus.CREATED).eTag(EntityTags.forVersion(created.getVersion())).body(mapper.toResponse(created));
+        return ResponseEntity.status(HttpStatus.CREATED).eTag(EntityTags.forLicense(created)).body(mapper.toResponse(created));
     }
 
     @Operation(summary = "Listar registros de licença ambiental",
@@ -63,7 +63,7 @@ public class EnvironmentalLicenseController {
     @GetMapping("/{id}")
     public ResponseEntity<EnvironmentalLicenseResponse> findById(@PathVariable String id) {
         var found = useCase.findById(id);
-        return ResponseEntity.ok().eTag(EntityTags.forVersion(found.getVersion())).body(mapper.toResponse(found));
+        return ResponseEntity.ok().eTag(EntityTags.forLicense(found)).body(mapper.toResponse(found));
     }
 
     @Operation(summary = "Atualizar licença ambiental",
@@ -71,8 +71,12 @@ public class EnvironmentalLicenseController {
     @PutMapping("/{id}")
     public ResponseEntity<EnvironmentalLicenseResponse> update(@PathVariable String id, @Valid @RequestBody EnvironmentalLicenseRequest request,
                                                @RequestHeader(value = "If-Match", required = false) String ifMatch) {
-        var updated = useCase.update(id, mapper.toDomain(request), EntityTags.requiredVersion(ifMatch));
-        return ResponseEntity.ok().eTag(EntityTags.forVersion(updated.getVersion())).body(mapper.toResponse(updated));
+        var replacement = mapper.toDomain(request);
+        replacement.validate();
+        long expectedVersion = EntityTags.requiredLicenseVersion(ifMatch);
+        EntityTags.requireLicenseMatch(ifMatch, useCase.findById(id));
+        var updated = useCase.update(id, replacement, expectedVersion);
+        return ResponseEntity.ok().eTag(EntityTags.forLicense(updated)).body(mapper.toResponse(updated));
     }
 
     @Operation(summary = "Excluir licença ambiental")
@@ -80,6 +84,8 @@ public class EnvironmentalLicenseController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable String id,
                        @RequestHeader(value = "If-Match", required = false) String ifMatch) {
-        useCase.delete(id, EntityTags.requiredVersion(ifMatch));
+        long expectedVersion = EntityTags.requiredLicenseVersion(ifMatch);
+        EntityTags.requireLicenseMatch(ifMatch, useCase.findById(id));
+        useCase.delete(id, expectedVersion);
     }
 }

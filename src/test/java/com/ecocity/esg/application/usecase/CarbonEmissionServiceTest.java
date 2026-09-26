@@ -77,11 +77,11 @@ class CarbonEmissionServiceTest {
         @DisplayName("update deve recalcular o status de compensacao")
         void shouldRecalculateOnUpdate() {
             CarbonEmission existing = sample(50, 10);
-            existing = existing.toBuilder().id("abc123").build();
+            existing = existing.toBuilder().id("abc123").version(0L).build();
             when(repositoryPort.findById("abc123")).thenReturn(Optional.of(existing));
             when(repositoryPort.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-            CarbonEmission result = service.update("abc123", sample(50, 100));
+            CarbonEmission result = service.update("abc123", sample(50, 100), 0L);
 
             assertThat(result.isCompensated()).isTrue();
         }
@@ -89,9 +89,9 @@ class CarbonEmissionServiceTest {
         @Test
         @DisplayName("delete deve lancar excecao quando nao existir")
         void shouldThrowOnDeleteWhenMissing() {
-            when(repositoryPort.existsById("missing")).thenReturn(false);
+            when(repositoryPort.findById("missing")).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.delete("missing")).isInstanceOf(ResourceNotFoundException.class);
+            assertThatThrownBy(() -> service.delete("missing", 0L)).isInstanceOf(ResourceNotFoundException.class);
         }
 
         @Test

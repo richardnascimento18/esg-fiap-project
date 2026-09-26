@@ -83,11 +83,11 @@ class DiversityReportServiceTest {
         @DisplayName("update deve substituir os campos existentes")
         void shouldUpdateFields() {
             DiversityReport existing = sample(30);
-            existing = existing.toBuilder().id("abc123").build();
+            existing = existing.toBuilder().id("abc123").version(0L).build();
             when(repositoryPort.findById("abc123")).thenReturn(Optional.of(existing));
             when(repositoryPort.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-            DiversityReport result = service.update("abc123", sample(60));
+            DiversityReport result = service.update("abc123", sample(60), 0L);
 
             assertThat(result.getWomenPercentage()).isEqualTo(60);
         }
@@ -95,9 +95,9 @@ class DiversityReportServiceTest {
         @Test
         @DisplayName("delete deve lancar excecao quando nao existir")
         void shouldThrowOnDeleteWhenMissing() {
-            when(repositoryPort.existsById("missing")).thenReturn(false);
+            when(repositoryPort.findById("missing")).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.delete("missing")).isInstanceOf(ResourceNotFoundException.class);
+            assertThatThrownBy(() -> service.delete("missing", 0L)).isInstanceOf(ResourceNotFoundException.class);
         }
 
         @Test

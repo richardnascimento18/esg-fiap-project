@@ -13,9 +13,6 @@ public interface CarbonEmissionRepositoryPort {
 
     List<CarbonEmission> findAll(int page, int size);
 
-    void deleteById(String id);
-
     void delete(CarbonEmission carbonEmission);
 
-    boolean existsById(String id);
 }

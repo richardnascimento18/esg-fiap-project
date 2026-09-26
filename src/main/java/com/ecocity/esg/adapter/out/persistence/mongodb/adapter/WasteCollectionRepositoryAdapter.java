@@ -51,18 +51,9 @@ public class WasteCollectionRepositoryAdapter implements WasteCollectionReposito
     }
 
     @Override
-    public void deleteById(String id) {
-        mongoRepository.deleteById(id);
-    }
-
-    @Override
     public void delete(WasteCollection wasteCollection) {
         reservations.markDeleted(wasteCollection.getId());
         mongoRepository.delete(mapper.toDocument(wasteCollection));
     }
 
-    @Override
-    public boolean existsById(String id) {
-        return mongoRepository.existsById(id);
-    }
 }

@@ -53,9 +53,11 @@ abstract class AbstractApiContractTest {
     @MethodSource("resources")
     void preservesJsonFieldsStatusCodesPaginationAndDeletion(Resource resource) throws Exception {
         String base = "/api/v1/" + resource.path();
-        JsonNode created = mapper.readTree(mvc.perform(post(base).contentType("application/json")
+        var createResponse = mvc.perform(post(base).contentType("application/json")
                         .content(resource.payload())).andExpect(status().isCreated())
-                .andReturn().getResponse().getContentAsByteArray());
+                .andReturn().getResponse();
+        JsonNode created = mapper.readTree(createResponse.getContentAsByteArray());
+        String createTag = createResponse.getHeader("ETag");
         String id = created.path("id").asText();
         assertThat(id).isNotBlank();
         JsonNode request = mapper.readTree(resource.payload());
@@ -66,19 +68,20 @@ abstract class AbstractApiContractTest {
         }
         mvc.perform(get(base + "/{id}", id)).andExpect(status().isOk())
                 .andExpect(result -> assertThat(mapper.readTree(result.getResponse().getContentAsByteArray())).isEqualTo(created));
-        mvc.perform(put(base + "/{id}", id).header("If-Match", "\"0\"").contentType("application/json").content(resource.payload()))
-                .andExpect(status().isOk()).andExpect(result -> assertThat(mapper.readTree(result.getResponse().getContentAsByteArray())).isEqualTo(created));
+        var updateResponse = mvc.perform(put(base + "/{id}", id).header("If-Match", createTag).contentType("application/json").content(resource.payload()))
+                .andExpect(status().isOk()).andExpect(result -> assertThat(mapper.readTree(result.getResponse().getContentAsByteArray())).isEqualTo(created))
+                .andReturn().getResponse();
         JsonNode firstPage = mapper.readTree(mvc.perform(get(base).param("page", "0").param("size", "1"))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray());
         assertThat(firstPage.isArray()).isTrue();
         assertThat(firstPage.size()).isEqualTo(1);
-        mvc.perform(delete(base + "/{id}", id).header("If-Match", "\"1\"")).andExpect(status().isNoContent()).andExpect(content().string(""));
+        mvc.perform(delete(base + "/{id}", id).header("If-Match", updateResponse.getHeader("ETag"))).andExpect(status().isNoContent()).andExpect(content().string(""));
         mvc.perform(get(base + "/{id}", id)).andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.path").value(base + "/" + id))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.details").doesNotExist());
-        mvc.perform(delete(base + "/{id}", id).header("If-Match", "\"1\"")).andExpect(status().isNotFound());
+        mvc.perform(delete(base + "/{id}", id).header("If-Match", updateResponse.getHeader("ETag"))).andExpect(status().isNotFound());
     }
 }

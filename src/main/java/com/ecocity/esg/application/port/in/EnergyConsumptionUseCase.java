@@ -15,11 +15,7 @@ public interface EnergyConsumptionUseCase {
 
     EnergyConsumption createWithId(EnergyConsumption energyConsumption, String id);
 
-    EnergyConsumption update(String id, EnergyConsumption energyConsumption);
-
     EnergyConsumption update(String id, EnergyConsumption energyConsumption, long expectedVersion);
-
-    void delete(String id);
 
     void delete(String id, long expectedVersion);
 

@@ -28,15 +28,7 @@ public class EnvironmentalLicenseService implements EnvironmentalLicenseUseCase 
     @Override
     public EnvironmentalLicense createWithId(EnvironmentalLicense environmentalLicense, String id) {
         EnvironmentalLicense created = environmentalLicense.forCreation(clock.instant());
-        return repositoryPort.save(created.toBuilder().id(id).build());
-    }
-
-    @Override
-    public EnvironmentalLicense update(String id, EnvironmentalLicense environmentalLicense) {
-        environmentalLicense.validate();
-        EnvironmentalLicense existing = repositoryPort.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(RESOURCE_NAME, id));
-        return repositoryPort.save(existing.updateWith(environmentalLicense, clock.instant()));
+        return repositoryPort.save(created.toBuilder().id(id).build()).withEffectiveStatusAt(clock.instant());
     }
 
     @Override
@@ -47,12 +39,6 @@ public class EnvironmentalLicenseService implements EnvironmentalLicenseUseCase 
             throw new com.ecocity.esg.domain.exception.StaleResourceException();
         }
         return repositoryPort.save(existing.updateWith(environmentalLicense, clock.instant()));
-    }
-
-    @Override
-    public void delete(String id) {
-        assertExists(id);
-        repositoryPort.deleteById(id);
     }
 
     @Override
@@ -77,9 +63,4 @@ public class EnvironmentalLicenseService implements EnvironmentalLicenseUseCase 
                 .map(license -> license.withEffectiveStatusAt(clock.instant())).toList();
     }
 
-    private void assertExists(String id) {
-        if (!repositoryPort.existsById(id)) {
-            throw new ResourceNotFoundException(RESOURCE_NAME, id);
-        }
-    }
 }

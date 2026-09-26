@@ -99,12 +99,12 @@ class EnergyConsumptionServiceTest {
         @DisplayName("deve atualizar os campos e recalcular o alerta")
         void shouldUpdateFieldsAndRecalculateAlert() {
             EnergyConsumption existing = sample(1000, 3000);
-            existing = existing.toBuilder().id("abc123").build();
+            existing = existing.toBuilder().id("abc123").version(0L).build();
             when(repositoryPort.findById("abc123")).thenReturn(Optional.of(existing));
             when(repositoryPort.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
             EnergyConsumption update = sample(5000, 3000);
-            EnergyConsumption result = service.update("abc123", update);
+            EnergyConsumption result = service.update("abc123", update, 0L);
 
             assertThat(result.getConsumptionKwh()).isEqualTo(5000);
             assertThat(result.isAlertTriggered()).isTrue();
@@ -115,7 +115,7 @@ class EnergyConsumptionServiceTest {
         void shouldThrowWhenNotFound() {
             when(repositoryPort.findById("missing")).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.update("missing", sample(100, 200)))
+            assertThatThrownBy(() -> service.update("missing", sample(100, 200), 0L))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
     }
@@ -127,21 +127,21 @@ class EnergyConsumptionServiceTest {
         @Test
         @DisplayName("deve remover quando o registro existir")
         void shouldDeleteWhenExists() {
-            when(repositoryPort.existsById("abc123")).thenReturn(true);
+            when(repositoryPort.findById("abc123")).thenReturn(Optional.of(sample(100, 200).toBuilder().id("abc123").version(0L).build()));
 
-            service.delete("abc123");
+            service.delete("abc123", 0L);
 
-            verify(repositoryPort, times(1)).deleteById("abc123");
+            verify(repositoryPort, times(1)).delete(any());
         }
 
         @Test
         @DisplayName("deve lancar ResourceNotFoundException quando o registro nao existir")
         void shouldThrowWhenNotExists() {
-            when(repositoryPort.existsById("missing")).thenReturn(false);
+            when(repositoryPort.findById("missing")).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.delete("missing"))
+            assertThatThrownBy(() -> service.delete("missing", 0L))
                     .isInstanceOf(ResourceNotFoundException.class);
-            verify(repositoryPort, never()).deleteById(anyString());
+            verify(repositoryPort, never()).delete(any());
         }
     }
 

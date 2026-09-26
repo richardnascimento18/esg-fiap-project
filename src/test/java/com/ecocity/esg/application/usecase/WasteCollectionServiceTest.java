@@ -78,11 +78,11 @@ class WasteCollectionServiceTest {
         @DisplayName("deve atualizar quando o registro existir")
         void shouldUpdateWhenExists() {
             WasteCollection existing = sample(50);
-            existing = existing.toBuilder().id("abc123").build();
+            existing = existing.toBuilder().id("abc123").version(0L).build();
             when(repositoryPort.findById("abc123")).thenReturn(Optional.of(existing));
             when(repositoryPort.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-            WasteCollection result = service.update("abc123", sample(90));
+            WasteCollection result = service.update("abc123", sample(90), 0L);
 
             assertThat(result.getRecyclingRatePercentage()).isEqualTo(90);
         }
@@ -92,7 +92,7 @@ class WasteCollectionServiceTest {
         void shouldThrowWhenNotFound() {
             when(repositoryPort.findById("missing")).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.update("missing", sample(50)))
+            assertThatThrownBy(() -> service.update("missing", sample(50), 0L))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
     }
@@ -104,20 +104,20 @@ class WasteCollectionServiceTest {
         @Test
         @DisplayName("deve remover quando existir")
         void shouldDeleteWhenExists() {
-            when(repositoryPort.existsById("abc123")).thenReturn(true);
+            when(repositoryPort.findById("abc123")).thenReturn(Optional.of(sample(50).toBuilder().id("abc123").version(0L).build()));
 
-            service.delete("abc123");
+            service.delete("abc123", 0L);
 
-            verify(repositoryPort).deleteById("abc123");
+            verify(repositoryPort).delete(any());
         }
 
         @Test
         @DisplayName("nao deve remover quando nao existir")
         void shouldNotDeleteWhenMissing() {
-            when(repositoryPort.existsById("missing")).thenReturn(false);
+            when(repositoryPort.findById("missing")).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.delete("missing")).isInstanceOf(ResourceNotFoundException.class);
-            verify(repositoryPort, never()).deleteById(any());
+            assertThatThrownBy(() -> service.delete("missing", 0L)).isInstanceOf(ResourceNotFoundException.class);
+            verify(repositoryPort, never()).delete(any());
         }
     }
 

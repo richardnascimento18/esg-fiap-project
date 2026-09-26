@@ -10,11 +10,7 @@ public interface EnvironmentalLicenseUseCase {
 
     EnvironmentalLicense createWithId(EnvironmentalLicense environmentalLicense, String id);
 
-    EnvironmentalLicense update(String id, EnvironmentalLicense environmentalLicense);
-
     EnvironmentalLicense update(String id, EnvironmentalLicense environmentalLicense, long expectedVersion);
-
-    void delete(String id);
 
     void delete(String id, long expectedVersion);
 

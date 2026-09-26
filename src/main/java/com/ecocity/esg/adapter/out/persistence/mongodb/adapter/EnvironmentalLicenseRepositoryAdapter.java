@@ -60,18 +60,9 @@ public class EnvironmentalLicenseRepositoryAdapter implements EnvironmentalLicen
     }
 
     @Override
-    public void deleteById(String id) {
-        mongoRepository.deleteById(id);
-    }
-
-    @Override
     public void delete(EnvironmentalLicense environmentalLicense) {
         reservations.markDeleted(environmentalLicense.getId());
         mongoRepository.delete(mapper.toDocument(environmentalLicense));
     }
 
-    @Override
-    public boolean existsById(String id) {
-        return mongoRepository.existsById(id);
-    }
 }

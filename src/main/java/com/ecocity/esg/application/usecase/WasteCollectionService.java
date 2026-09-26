@@ -29,13 +29,6 @@ public class WasteCollectionService implements WasteCollectionUseCase {
     }
 
     @Override
-    public WasteCollection update(String id, WasteCollection wasteCollection) {
-        wasteCollection.validate();
-        WasteCollection existing = findById(id);
-        return repositoryPort.save(existing.updateWith(wasteCollection));
-    }
-
-    @Override
     public WasteCollection update(String id, WasteCollection wasteCollection, long expectedVersion) {
         wasteCollection.validate();
         WasteCollection existing = findById(id);
@@ -43,12 +36,6 @@ public class WasteCollectionService implements WasteCollectionUseCase {
             throw new com.ecocity.esg.domain.exception.StaleResourceException();
         }
         return repositoryPort.save(existing.updateWith(wasteCollection));
-    }
-
-    @Override
-    public void delete(String id) {
-        assertExists(id);
-        repositoryPort.deleteById(id);
     }
 
     @Override
@@ -71,9 +58,4 @@ public class WasteCollectionService implements WasteCollectionUseCase {
         return repositoryPort.findAll(page, size);
     }
 
-    private void assertExists(String id) {
-        if (!repositoryPort.existsById(id)) {
-            throw new ResourceNotFoundException(RESOURCE_NAME, id);
-        }
-    }
 }

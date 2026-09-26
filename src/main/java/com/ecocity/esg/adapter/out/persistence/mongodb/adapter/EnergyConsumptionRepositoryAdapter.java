@@ -51,18 +51,9 @@ public class EnergyConsumptionRepositoryAdapter implements EnergyConsumptionRepo
     }
 
     @Override
-    public void deleteById(String id) {
-        mongoRepository.deleteById(id);
-    }
-
-    @Override
     public void delete(EnergyConsumption energyConsumption) {
         reservations.markDeleted(energyConsumption.getId());
         mongoRepository.delete(mapper.toDocument(energyConsumption));
     }
 
-    @Override
-    public boolean existsById(String id) {
-        return mongoRepository.existsById(id);
-    }
 }

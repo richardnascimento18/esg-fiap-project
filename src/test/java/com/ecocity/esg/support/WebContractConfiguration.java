@@ -82,8 +82,6 @@ public class WebContractConfiguration {
         when(port.save(any())).thenAnswer(call -> data.save(call.getArgument(0)));
         when(port.findById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)));
         when(port.findAll(anyInt(), anyInt())).thenAnswer(call -> data.page(call.getArgument(0), call.getArgument(1)));
-        when(port.existsById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)).isPresent());
-        doAnswer(call -> { data.remove(call.getArgument(0)); return null; }).when(port).deleteById(anyString());
         doAnswer(call -> { data.removeValue(call.getArgument(0)); return null; }).when(port).delete(any());
         return port;
     }
@@ -96,8 +94,6 @@ public class WebContractConfiguration {
         when(port.save(any())).thenAnswer(call -> data.save(call.getArgument(0)));
         when(port.findById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)));
         when(port.findAll(anyInt(), anyInt())).thenAnswer(call -> data.page(call.getArgument(0), call.getArgument(1)));
-        when(port.existsById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)).isPresent());
-        doAnswer(call -> { data.remove(call.getArgument(0)); return null; }).when(port).deleteById(anyString());
         doAnswer(call -> { data.removeValue(call.getArgument(0)); return null; }).when(port).delete(any());
         return port;
     }
@@ -110,8 +106,6 @@ public class WebContractConfiguration {
         when(port.save(any())).thenAnswer(call -> data.save(call.getArgument(0)));
         when(port.findById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)));
         when(port.findAll(anyInt(), anyInt())).thenAnswer(call -> data.page(call.getArgument(0), call.getArgument(1)));
-        when(port.existsById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)).isPresent());
-        doAnswer(call -> { data.remove(call.getArgument(0)); return null; }).when(port).deleteById(anyString());
         doAnswer(call -> { data.removeValue(call.getArgument(0)); return null; }).when(port).delete(any());
         return port;
     }
@@ -124,8 +118,6 @@ public class WebContractConfiguration {
         when(port.save(any())).thenAnswer(call -> data.save(call.getArgument(0)));
         when(port.findById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)));
         when(port.findAll(anyInt(), anyInt())).thenAnswer(call -> data.page(call.getArgument(0), call.getArgument(1)));
-        when(port.existsById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)).isPresent());
-        doAnswer(call -> { data.remove(call.getArgument(0)); return null; }).when(port).deleteById(anyString());
         doAnswer(call -> { data.removeValue(call.getArgument(0)); return null; }).when(port).delete(any());
         return port;
     }
@@ -138,8 +130,6 @@ public class WebContractConfiguration {
         when(port.save(any())).thenAnswer(call -> data.save(call.getArgument(0)));
         when(port.findById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)));
         when(port.findAll(anyInt(), anyInt())).thenAnswer(call -> data.page(call.getArgument(0), call.getArgument(1)));
-        when(port.existsById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)).isPresent());
-        doAnswer(call -> { data.remove(call.getArgument(0)); return null; }).when(port).deleteById(anyString());
         doAnswer(call -> { data.removeValue(call.getArgument(0)); return null; }).when(port).delete(any());
         return port;
     }

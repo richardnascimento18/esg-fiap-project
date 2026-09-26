@@ -91,12 +91,12 @@ class EnvironmentalLicenseServiceTest {
         @DisplayName("update deve recalcular o status")
         void shouldRecalculateStatusOnUpdate() {
             EnvironmentalLicense existing = sample(Instant.now().minus(30, ChronoUnit.DAYS), Instant.now().plus(60, ChronoUnit.DAYS));
-            existing = existing.toBuilder().id("abc123").build();
+            existing = existing.toBuilder().id("abc123").version(0L).build();
             when(repositoryPort.findById("abc123")).thenReturn(Optional.of(existing));
             when(repositoryPort.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
             EnvironmentalLicense update = sample(Instant.now().minus(400, ChronoUnit.DAYS), Instant.now().minus(5, ChronoUnit.DAYS));
-            EnvironmentalLicense result = service.update("abc123", update);
+            EnvironmentalLicense result = service.update("abc123", update, 0L);
 
             assertThat(result.getStatus()).isEqualTo(LicenseStatus.EXPIRED);
         }
@@ -112,9 +112,9 @@ class EnvironmentalLicenseServiceTest {
         @Test
         @DisplayName("delete deve lancar excecao quando nao existir")
         void shouldThrowOnDeleteWhenMissing() {
-            when(repositoryPort.existsById("missing")).thenReturn(false);
+            when(repositoryPort.findById("missing")).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.delete("missing")).isInstanceOf(ResourceNotFoundException.class);
+            assertThatThrownBy(() -> service.delete("missing", 0L)).isInstanceOf(ResourceNotFoundException.class);
         }
     }
 }

@@ -13,9 +13,6 @@ public interface DiversityReportRepositoryPort {
 
     List<DiversityReport> findAll(int page, int size);
 
-    void deleteById(String id);
-
     void delete(DiversityReport diversityReport);
 
-    boolean existsById(String id);
 }

@@ -29,13 +29,6 @@ public class DiversityReportService implements DiversityReportUseCase {
     }
 
     @Override
-    public DiversityReport update(String id, DiversityReport diversityReport) {
-        diversityReport.validate();
-        DiversityReport existing = findById(id);
-        return repositoryPort.save(existing.updateWith(diversityReport));
-    }
-
-    @Override
     public DiversityReport update(String id, DiversityReport diversityReport, long expectedVersion) {
         diversityReport.validate();
         DiversityReport existing = findById(id);
@@ -43,12 +36,6 @@ public class DiversityReportService implements DiversityReportUseCase {
             throw new com.ecocity.esg.domain.exception.StaleResourceException();
         }
         return repositoryPort.save(existing.updateWith(diversityReport));
-    }
-
-    @Override
-    public void delete(String id) {
-        assertExists(id);
-        repositoryPort.deleteById(id);
     }
 
     @Override
@@ -71,9 +58,4 @@ public class DiversityReportService implements DiversityReportUseCase {
         return repositoryPort.findAll(page, size);
     }
 
-    private void assertExists(String id) {
-        if (!repositoryPort.existsById(id)) {
-            throw new ResourceNotFoundException(RESOURCE_NAME, id);
-        }
-    }
 }

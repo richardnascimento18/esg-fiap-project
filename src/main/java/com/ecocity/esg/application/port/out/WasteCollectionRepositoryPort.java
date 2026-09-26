@@ -13,9 +13,6 @@ public interface WasteCollectionRepositoryPort {
 
     List<WasteCollection> findAll(int page, int size);
 
-    void deleteById(String id);
-
     void delete(WasteCollection wasteCollection);
 
-    boolean existsById(String id);
 }

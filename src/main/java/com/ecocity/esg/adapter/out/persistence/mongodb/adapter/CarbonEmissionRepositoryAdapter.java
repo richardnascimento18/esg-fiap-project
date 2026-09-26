@@ -51,18 +51,9 @@ public class CarbonEmissionRepositoryAdapter implements CarbonEmissionRepository
     }
 
     @Override
-    public void deleteById(String id) {
-        mongoRepository.deleteById(id);
-    }
-
-    @Override
     public void delete(CarbonEmission carbonEmission) {
         reservations.markDeleted(carbonEmission.getId());
         mongoRepository.delete(mapper.toDocument(carbonEmission));
     }
 
-    @Override
-    public boolean existsById(String id) {
-        return mongoRepository.existsById(id);
-    }
 }

@@ -51,18 +51,9 @@ public class DiversityReportRepositoryAdapter implements DiversityReportReposito
     }
 
     @Override
-    public void deleteById(String id) {
-        mongoRepository.deleteById(id);
-    }
-
-    @Override
     public void delete(DiversityReport diversityReport) {
         reservations.markDeleted(diversityReport.getId());
         mongoRepository.delete(mapper.toDocument(diversityReport));
     }
 
-    @Override
-    public boolean existsById(String id) {
-        return mongoRepository.existsById(id);
-    }
 }
