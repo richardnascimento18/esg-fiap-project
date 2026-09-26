@@ -6,3 +6,12 @@
 .project
 .settings/
 .env
+.env.*
+!.env.example
+.factorypath
+.DS_Store
+Thumbs.db
+*.log
+logs/
+*.zip
+.mvn/wrapper/dists/

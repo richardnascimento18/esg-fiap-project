@@ -1,6 +1,13 @@
 spring:
   application:
     name: ecocity-esg
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  task:
+    scheduling:
+      shutdown:
+        await-termination: true
+        await-termination-period: 20s
   data:
     mongodb:
       uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/ecocity_esg}
@@ -48,6 +55,10 @@ logging:
     com.ecocity.esg: INFO
 
 app:
+  mongo:
+    connect-timeout: ${APP_MONGO_CONNECT_TIMEOUT:PT5S}
+    read-timeout: ${APP_MONGO_READ_TIMEOUT:PT15S}
+    server-selection-timeout: ${APP_MONGO_SERVER_SELECTION_TIMEOUT:PT5S}
   security:
     editor:
       username: ${APP_EDITOR_USERNAME}
@@ -57,3 +68,4 @@ app:
       password: ${APP_ADMIN_PASSWORD}
   license-alert:
     cron: "${APP_LICENSE_ALERT_CRON:-}"
+    lease: ${APP_LICENSE_ALERT_LEASE:PT1M}

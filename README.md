@@ -1,62 +1,69 @@
 # EcoCity ESG
 
-Aplicação Java 21 e Spring Boot 3.3 para registrar indicadores ambientais, sociais e de governança em MongoDB. O projeto mantém domínio, casos de uso e portas independentes de Spring; controladores REST, agendamento, logs e persistência são adaptadores. Testes ArchUnit verificam essas fronteiras.
+Aplicação única Java 21 / Spring Boot 3.3 com MongoDB. Domínio, casos de uso e portas não dependem de Spring; REST, agendamento, logs e MongoDB são adaptadores. Testes ArchUnit protegem as fronteiras.
 
-## Recursos e regras
+## API e segurança
 
-| Recurso | Rota `/api/v1` | Regra principal |
-| --- | --- | --- |
-| Energia | `/energy-consumptions` | Alerta quando consumo excede o limite. |
-| Resíduos | `/waste-collections` | Peso não negativo e taxa de reciclagem de 0 a 100%. |
-| Carbono | `/carbon-emissions` | Compensado quando compensação cobre a emissão; período `AAAA-Q1` a `AAAA-Q4`. |
-| Diversidade | `/diversity-reports` | Percentuais de 0 a 100%; mês `AAAA-MM`. |
-| Licenças | `/environmental-licenses` | Vencimento não anterior à emissão; número único. |
+As coleções `/api/v1/energy-consumptions`, `/waste-collections`, `/carbon-emissions`, `/diversity-reports` e `/environmental-licenses` oferecem POST, GET, GET por ID, PUT e DELETE. Listas usam `page` (começa em 0) e `size` (1–100, padrão 20), ordenadas por ID. Paginação por offset não produz um retrato estável durante escritas simultâneas.
 
-Cada recurso aceita `POST`, `GET`, `GET /{id}`, `PUT /{id}` e `DELETE /{id}`. As listas retornam arrays JSON e usam `page` (a partir de 0) e `size` (1 a 100, padrão 20), ordenados por identificador. O offset pode deslocar itens entre páginas durante escritas simultâneas; clientes que precisam de um retrato consistente devem evitar paginar enquanto alteram a coleção.
+HTTP Basic usa duas contas locais definidas **exclusivamente por configuração externa**. A senha de cada conta precisa ter pelo menos 12 caracteres, ser diferente da outra e não pode ser o exemplo `replace-with-*`. Falta de configuração ou valores inválidos impedem a inicialização. As senhas ficam codificadas com BCrypt em memória; não são armazenadas no código nem em MongoDB. Em ambiente compartilhado, forneça HTTPS no proxy de entrada e gerencie/rotacione as credenciais fora do repositório. O mecanismo local não oferece revogação individual de sessões, auditoria de usuários nem integração com diretório corporativo.
 
-Validações de entrada retornam `400`, regras de domínio `422`, ausência de registro `404`, conflito de número de licença `409` e falhas inesperadas `500` com mensagem genérica. O corpo de erro contém `timestamp`, `status`, `error`, `message` e `path`; erros de campos incluem `details`. `X-Request-ID` é devolvido em cada resposta e incluído nos logs. A especificação OpenAPI fica em `/v3/api-docs` e a interface em `/swagger-ui.html`.
+| Ação | Acesso |
+| --- | --- |
+| GET dos recursos, OpenAPI/Swagger e `/actuator/health/**` | Público |
+| POST e PUT dos recursos | `EDITOR` ou `ADMIN` |
+| DELETE dos recursos e `/actuator/info` | `ADMIN` |
+| Outros caminhos/Actuator | Não expostos ou restritos a `ADMIN` |
 
-## Execução local
-
-Requisitos: **JDK 21** e Docker para MongoDB e testes de integração. O Maven Wrapper fixa Maven 3.9.9; não é necessário instalar Maven separadamente.
+Credenciais ausentes ou incorretas retornam 401; privilégios insuficientes retornam 403. A API não devolve detalhes de autenticação. Apenas `health` e `info` estão expostos pelo Actuator; detalhes internos de health ficam ocultos. `X-Request-ID` acompanha cada resposta e o contexto de log. Falhas inesperadas registram tipo de exceção e método, sem mensagens de driver que possam conter credenciais; alertas de licença registram ID e data, não nome da instalação nem número da licença.
 
 ```bash
 cp .env.example .env
-# Substitua as duas senhas de exemplo em .env
+# Defina as senhas locais diferentes das amostras em .env.
 docker compose up --build -d
 ```
 
-A API estará em `http://localhost:8080`; MongoDB escuta apenas em `127.0.0.1:27017`. O Compose define dois serviços, uma rede `ecocity`, volume nomeado `mongodb_data` e variáveis para usuários, senhas, portas e carga de demonstração. O usuário da aplicação possui apenas `readWrite` no banco `ecocity_esg`; a conta root serve à inicialização local. A criação desse usuário ocorre **somente no primeiro início de um volume vazio**. Para reutilizar um volume antigo, crie o usuário da aplicação nesse banco com as credenciais adequadas; não apague dados existentes para aplicar a configuração nova.
+O Compose expõe a API em `localhost:8080` e MongoDB só em `127.0.0.1:27017`. A conta Mongo da aplicação tem `readWrite` apenas no banco `ecocity_esg`. A criação do usuário ocorre apenas em volume vazio. Para rodar a JVM no host, configure `SPRING_DATA_MONGODB_URI`, `APP_EDITOR_USERNAME`, `APP_EDITOR_PASSWORD`, `APP_ADMIN_USERNAME` e `APP_ADMIN_PASSWORD` no ambiente e execute `./mvnw spring-boot:run`. Nunca inclua senhas reais em comandos versionados. O perfil `dev` usa Mongo local por padrão; em produção, forneça uma URI com credenciais externas. `DataSeeder` só executa com `SPRING_PROFILES_ACTIVE=dev` **e** `APP_SEED_DEMO_DATA=true`.
 
-Para desenvolver com a JVM no host, inicie apenas MongoDB e configure uma URI para o usuário da aplicação:
-
-```bash
-docker compose up -d mongodb
-SPRING_PROFILES_ACTIVE=dev SPRING_DATA_MONGODB_URI='mongodb://ecocity_app:SENHA@localhost:27017/ecocity_esg?authSource=ecocity_esg' ./mvnw spring-boot:run
-```
-
-A URI acima é apenas um formato; substitua `SENHA` pelo valor local e codifique caracteres especiais de URL. Não registre senhas reais no repositório ou em scripts. O perfil base não ativa `dev`. A imagem também não define perfil. Use `SPRING_PROFILES_ACTIVE` e `SPRING_DATA_MONGODB_URI` no ambiente de execução. `dev` usa MongoDB local por padrão; produção deve receber sua própria URI e credenciais externamente.
-
-`DataSeeder` exige **ambos** `SPRING_PROFILES_ACTIVE=dev` e `APP_SEED_DEMO_DATA=true`. Ele insere 12 exemplos por coleção vazia e não roda em outros perfis. O Compose usa `dev`, mas mantém a carga desativada por padrão. O agendamento de avisos fica desligado por padrão (`APP_LICENSE_ALERT_CRON=-`). Defina uma expressão cron de seis campos somente em uma instância escolhida para produzir avisos diários no log.
-
-## Testes e pacote
+Exemplo de criação autenticada:
 
 ```bash
-./mvnw test       # domínio, casos de uso, HTTP, OpenAPI e ArchUnit; sem Docker
-./mvnw verify     # inclui integração com MongoDB 7 via Testcontainers
-./mvnw package    # gera target/ecocity-esg.jar
+curl -u 'editor:SENHA_LOCAL' -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: exemplo-1' -d '{"district":"Centro","wasteType":"RECYCLABLE","weightKg":10,"recyclingRatePercentage":50,"collectionDate":"2026-01-01T00:00:00Z","collectorTeam":"Equipe","properlyDisposed":true}' \
+  http://localhost:8080/api/v1/waste-collections
 ```
 
-O teste de integração pode usar um MongoDB descartável externo com `-Dtest.mongodb.uri=mongodb://...`; essa instância deve ser exclusiva para testes. O arquivo `src/test/resources/docker-java.properties` fixa a versão da API Docker usada por Testcontainers para compatibilidade com Docker 29. O projeto não impõe percentuais artificiais de cobertura nem ferramentas estáticas adicionais; a suíte e as regras de arquitetura são as verificações principais.
+## Concorrência e repetição de requisições
 
-## Operação e evolução de dados
+Cada documento mutável tem versão Mongo `@Version`. POST e GET por ID retornam `ETag: "0"` para um registro novo; PUT incrementa a versão e retorna nova ETag. PUT e DELETE exigem `If-Match` forte com número decimal entre aspas. Sem cabeçalho: 428. Sintaxe inválida (incluindo ETag fraca): 400. Versão antiga: 412. Uma corrida depois da leitura pode retornar 409 pelo bloqueio otimista do MongoDB. DELETE usa a versão no comando de persistência, portanto uma atualização simultânea não é apagada silenciosamente. Listas não fornecem ETag. Documentos legados sem versão recebem `version: 0` no início; esse preenchimento é idempotente e antecede o uso normal da API.
 
-Actuator expõe apenas `health` e `info`; `/actuator/health/liveness` e `/actuator/health/readiness` permitem verificar o processo e sua dependência de MongoDB. Detalhes internos de saúde não são enviados a clientes. A aplicação encerra solicitações em andamento de forma graciosa. A inicialização falha quando os índices exigidos não podem ser criados. A exceção inesperada é registrada com stack trace e método/caminho HTTP, enquanto a resposta pública permanece genérica. Métricas básicas de Spring Boot e MongoDB existem internamente, sem endpoint público de métricas.
+POST aceita `Idempotency-Key` opcional em todas as cinco coleções. A chave tem 1–128 caracteres ASCII alfanuméricos, `.`, `_` ou `-`; seu escopo é **global por coleção**, inclusive entre usuários. O adaptador Mongo grava uma reserva com hash da chave e hash do DTO JSON normalizado antes da criação. O ID derivado da chave torna tentativas simultâneas da mesma criação uma única entidade. A repetição com o mesmo corpo devolve o mesmo ID (e a representação atual se o recurso já foi alterado); a mesma chave com outro corpo retorna 409. A reserva permanece até remoção administrativa deliberada, sem TTL automático. Após DELETE, a reserva vira tombstone e a chave não pode criar novamente. Sem chave, POST continua não idempotente; use chave ao automatizar retries. Um erro após tombstone e antes do DELETE pode deixar a chave bloqueada enquanto o recurso ainda existe; essa escolha impede duplicação. Não há efeito externo de POST além da gravação Mongo.
 
-`MongoSchemaInitializer` garante índices na inicialização, incluindo unicidade de `licenseNumber` e índice de `expirationDate` para a busca de renovação. Alterações futuras em documentos devem primeiro permitir leitura de campos antigos ausentes, depois preencher dados existentes com um script versionado e testado, e só então tornar o campo obrigatório. Mudanças de unicidade ou índices exigem verificação de duplicatas e planejamento de rollback antes da implantação; o inicializador não migra documentos nem remove índices antigos. Mapas `sensorMetadata` e `additionalRequirements` são deliberadamente flexíveis; clientes devem usar valores JSON pequenos e evitar dados sensíveis.
+O aplicativo não repete automaticamente escritas Mongo, conflitos otimistas ou alertas: retry cego poderia duplicar efeitos ou esconder falhas de negócio. O cliente pode repetir POST **com a mesma chave** e atualizar um PUT após novo GET/ETag. O driver Mongo pode usar seu comportamento próprio de retryable writes quando suportado pelo servidor. O adaptador de notificação atual apenas escreve um log; não envia e-mail ou mensagem externa.
 
-O status de licença é calculado com um `Clock` injetado: `SUSPENDED` prevalece; após o vencimento a leitura mostra `EXPIRED`; antes dele um estado persistido `RENEWAL_IN_PROGRESS` é preservado. A API atual não fornece comando para iniciar renovação ou suspensão; esses estados podem existir em documentos legados. `PUT` substitui campos editáveis e preserva esses estados quando presentes. Consultas de renovação filtram datas no MongoDB e não alteram documentos. Avisos são logs repetíveis, sem envio externo ou efeito transacional.
+## Licenças e agendamento
 
-O índice único do MongoDB decide corridas de criação da mesma licença; o conflito retorna `409`. As demais atualizações completas por `PUT` aceitam a política de última gravação prevalecer. Não há token de versão/ETag no contrato atual. Para um futuro fluxo colaborativo de edição, introduza pré-condições HTTP e controle de versão do documento conjuntamente, com plano de migração de documentos antigos. Não foram adicionados retries automáticos: falhas permanentes devem permanecer visíveis e os avisos em log podem ser executados novamente no próximo agendamento. Execute o agendador em uma única instância para evitar logs duplicados.
+A consulta de renovação considera vencimento no intervalo inclusivo `[agora, agora + 30 dias]`. Licenças vencidas não são notificadas para sempre; licenças `SUSPENDED` e `RENEWAL_IN_PROGRESS` também são excluídas. O estado retornado pela API é calculado com `Clock` injetado: suspensão prevalece; após o vencimento, `EXPIRED`; antes, a renovação em andamento é preservada. Não há endpoint de transição para suspensão/renovação. Uma licença ativa na janela ainda gera um log a cada execução agendada; não há cooldown persistido, porque hoje o efeito é somente log.
 
-**Limitação de segurança:** a API não implementa autenticação ou autorização. É adequada à demonstração local e deve ficar atrás de controles de acesso de rede em qualquer implantação compartilhada. Credenciais vêm do ambiente; o contêiner da aplicação roda como usuário não root. Não publique o serviço MongoDB fora do host de desenvolvimento nem exponha endpoints internos de gerenciamento.
+`APP_LICENSE_ALERT_CRON=-` desliga o agendamento no perfil base. Com cron ativo, uma reserva Mongo `scheduler_lock` permite uma única execução por vez entre instâncias. O lease padrão é `PT1M` (`APP_LICENSE_ALERT_LEASE`, válido de 15 segundos a 1 hora), renovado periodicamente durante o trabalho. Uma instância interrompida libera a reserva ao encerrar; se morrer, outra pode reclamá-la após expiração. Se a renovação do lease falhar, o scan é interrompido e registra erro. A coordenação pressupõe relógios de instância razoavelmente sincronizados e MongoDB disponível; um adaptador externo de notificação exigiria sua própria deduplicação transacional.
+
+## Domínio, números e dados
+
+Regras de domínio validam textos obrigatórios, enums, datas, números finitos e faixas mesmo fora do HTTP. `ReportingQuarter` é um valor imutável com ano e trimestre válidos; JSON e Mongo continuam usando `AAAA-Qn`. `reportingMonth` usa `YearMonth` para validação de calendário, preservando a string do contrato existente. Medições de energia, massa, carbono e percentuais permanecem `double`: são quantidades aproximadas, não saldos monetários ou valores contábeis que exigem decimal exato. Percentuais são limitados a 0–100 e valores não finitos são rejeitados. Uma futura regra de arredondamento/regulação deve definir escala e migração antes de adotar `BigDecimal`.
+
+`MongoSchemaInitializer` cria apenas os índices usados: `environmental_license.licenseNumber` único (invariante de negócio) e `environmental_license.expirationDate` (janela de renovação). A ordenação de listas por ID usa o índice `_id` nativo. Índices históricos de campos não consultados não são criados em bancos novos; bancos existentes podem conservá-los. Remova cada índice antigo em janela planejada depois de inspecionar `getIndexes()`, carga e eventual uso externo. A inicialização não apaga índices automaticamente. Mudanças futuras de campo devem seguir: leitura compatível de documento antigo, backfill idempotente testado, então exigência do novo campo. Renomeações/alterações semânticas exigem script versionado, backup, validação de duplicatas e plano de rollback. Mongock não foi adicionado para um único backfill simples e idempotente; considere-o quando houver uma sequência real de migrações dependentes.
+
+## Operação e verificação
+
+Mongo usa tempos limite configuráveis de conexão (`APP_MONGO_CONNECT_TIMEOUT`, padrão `PT5S`), leitura (`APP_MONGO_READ_TIMEOUT`, `PT15S`) e seleção de servidor (`APP_MONGO_SERVER_SELECTION_TIMEOUT`, `PT5S`), todos entre 1 e 60 segundos. O pool espera no máximo 5 segundos por conexão. Configuração de segurança, lease ou timeout inválida falha na inicialização; Mongo indisponível falha durante a criação/verificação de índices. Spring concede até 20 segundos para solicitações e tarefas em andamento no encerramento; Compose aguarda 30 segundos antes de forçar a parada. Recursos Mongo são fechados pelo ciclo de vida Spring.
+
+```bash
+./mvnw test       # unidade, contratos HTTP e ArchUnit
+./mvnw verify     # inclui Testcontainers/Mongo e SpotBugs (alta prioridade)
+./mvnw package    # target/ecocity-esg.jar
+git archive --format=zip --output=ecocity-esg-university.zip HEAD
+```
+
+`git archive` empacota somente arquivos versionados: sem `.git`, `target`, `.env`, logs ou arquivos locais de IDE. O Maven Wrapper fixa Maven 3.9.9 e verifica SHA-256 da distribuição baixada. SpotBugs roda em `verify` para achados de alta prioridade; não há meta artificial de 100% de cobertura. Dependências transitivas permanecem governadas pelo BOM do Spring Boot. Não foi adicionada varredura automática de CVEs baseada em feed remoto: sem uma fonte/API confiável e política de triagem, uma verificação local produziria falhas instáveis; isso deve ser definido antes do futuro CI.
+
+Os testes de integração precisam de Docker. Alternativamente, `-Dtest.mongodb.uri=mongodb://...` aponta para Mongo descartável exclusivo de testes. O projeto não inclui CI/CD, infraestrutura Azure, observabilidade externa ou plataforma de identidade nesta etapa.

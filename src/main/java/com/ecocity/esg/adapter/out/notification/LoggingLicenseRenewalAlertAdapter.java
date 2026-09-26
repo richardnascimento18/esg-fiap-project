@@ -13,7 +13,6 @@ public class LoggingLicenseRenewalAlertAdapter implements LicenseRenewalAlertPor
 
     @Override
     public void notifyRenewalRequired(EnvironmentalLicense license) {
-        log.warn("Licenca {} da instalacao {} vence em {} - iniciar processo de renovacao",
-                license.getLicenseNumber(), license.getFacility(), license.getExpirationDate());
+        log.warn("License renewal due: id={}, expiration={}", license.getId(), license.getExpirationDate());
     }
 }

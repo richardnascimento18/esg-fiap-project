@@ -9,6 +9,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 
 @WebContractTest
 class SecurityContractTest {
@@ -32,5 +33,15 @@ class SecurityContractTest {
         mvc.perform(delete("/api/v1/energy-consumptions/1")).andExpect(status().isForbidden());
         mvc.perform(get("/actuator/info")).andExpect(status().isForbidden());
         mvc.perform(post("/api/v1/energy-consumptions")).andExpect(status().isBadRequest());
+    }
+
+    @Test @WithAnonymousUser
+    void basicCredentialsAreCheckedWithoutLeakingDetails() throws Exception {
+        mvc.perform(post("/api/v1/energy-consumptions").with(httpBasic("test-editor", "wrong-password")))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/energy-consumptions").with(httpBasic("test-editor", "test-editor-password")))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/actuator/info").with(httpBasic("test-admin", "test-admin-password")))
+                .andExpect(status().isOk());
     }
 }

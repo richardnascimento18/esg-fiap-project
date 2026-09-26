@@ -8,4 +8,4 @@ spring:
 app:
   seed-demo-data: ${APP_SEED_DEMO_DATA:false}
   license-alert:
-    cron: "0 0 6 * * *"
+    cron: "${APP_LICENSE_ALERT_CRON:0 0 6 * * *}"

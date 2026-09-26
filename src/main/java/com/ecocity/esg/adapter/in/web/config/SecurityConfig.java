@@ -43,9 +43,11 @@ public class SecurityConfig {
             @Value("${app.security.admin.username}") String adminName,
             @Value("${app.security.admin.password}") String adminPassword,
             PasswordEncoder encoder) {
-        if (editorName.isBlank() || adminName.isBlank() || editorPassword.isBlank() || adminPassword.isBlank()
-                || editorName.equals(adminName)) {
-            throw new IllegalArgumentException("Security users require distinct, non-blank names and passwords");
+        if (editorName.isBlank() || adminName.isBlank() || editorPassword.length() < 12
+                || adminPassword.length() < 12 || editorName.equals(adminName)
+                || editorPassword.equals(adminPassword) || editorPassword.startsWith("replace-with-")
+                || adminPassword.startsWith("replace-with-")) {
+            throw new IllegalArgumentException("Security users require distinct names and non-example passwords of at least 12 characters");
         }
         return new InMemoryUserDetailsManager(
                 User.withUsername(editorName).password(encoder.encode(editorPassword)).roles("EDITOR").build(),

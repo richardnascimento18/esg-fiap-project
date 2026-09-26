@@ -105,7 +105,7 @@ public class GlobalExceptionHandler {
     @ApiResponse(responseCode = "500", description = "Erro interno inesperado")
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
-        log.error("Unexpected error on {} {}", request.getMethod(), request.getRequestURI(), ex);
+        log.error("Unhandled request failure: type={}, method={}", ex.getClass().getSimpleName(), request.getMethod());
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno inesperado", request, null);
     }
 
