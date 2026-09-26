@@ -1,6 +1,6 @@
 # EcoCity ESG
 
-Aplicação única Java 21 / Spring Boot 3.3 com MongoDB. Domínio, casos de uso e portas não dependem de Spring; REST, agendamento, logs e MongoDB são adaptadores. Testes ArchUnit protegem as fronteiras.
+Aplicação única Java 21 / Spring Boot 3.5 com MongoDB. Domínio, casos de uso e portas não dependem de Spring; REST, agendamento, logs e MongoDB são adaptadores. Testes ArchUnit protegem as fronteiras.
 
 ## API e segurança
 
