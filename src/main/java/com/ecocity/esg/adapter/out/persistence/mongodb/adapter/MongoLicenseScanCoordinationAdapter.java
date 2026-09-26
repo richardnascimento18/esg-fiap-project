@@ -6,7 +6,6 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
@@ -73,7 +72,7 @@ public class MongoLicenseScanCoordinationAdapter implements LicenseScanCoordinat
                     runner.interrupt();
                 }
             } catch (RuntimeException ex) {
-                log.error("License scan lease renewal failed", ex);
+                log.error("License scan lease renewal failed: type={}", ex.getClass().getSimpleName());
                 lost.set(true);
                 runner.interrupt();
             }

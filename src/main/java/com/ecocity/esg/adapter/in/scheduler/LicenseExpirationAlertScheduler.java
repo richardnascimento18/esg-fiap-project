@@ -23,7 +23,7 @@ public class LicenseExpirationAlertScheduler {
         try {
             useCase.checkExpiringLicenses();
         } catch (RuntimeException ex) {
-            log.error("License renewal scan failed", ex);
+            log.error("License renewal scan failed: type={}", ex.getClass().getSimpleName());
             throw ex;
         }
     }
