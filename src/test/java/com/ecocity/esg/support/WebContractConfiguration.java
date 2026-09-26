@@ -49,6 +49,11 @@ public class WebContractConfiguration {
     }
 
     @Bean
+    LicenseScanCoordinationPort coordination() {
+        return task -> { task.run(); return true; };
+    }
+
+    @Bean
     EnergyConsumptionRepositoryPort energyConsumptionRepository() {
         var port = mock(EnergyConsumptionRepositoryPort.class);
         var data = new Records<EnergyConsumption>(EnergyConsumption::getId,

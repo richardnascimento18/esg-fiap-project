@@ -18,6 +18,8 @@ import com.ecocity.esg.application.usecase.EnvironmentalLicenseService;
 import com.ecocity.esg.application.port.in.CheckLicenseExpirationUseCase;
 import com.ecocity.esg.application.port.out.LicenseRenewalAlertPort;
 import com.ecocity.esg.application.usecase.CheckLicenseExpirationService;
+import com.ecocity.esg.application.usecase.CoordinatedLicenseExpirationService;
+import com.ecocity.esg.application.port.out.LicenseScanCoordinationPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -58,7 +60,9 @@ public class ApplicationConfiguration {
 
     @Bean
     public CheckLicenseExpirationUseCase checkLicenseExpirationUseCase(
-            EnvironmentalLicenseRepositoryPort repository, LicenseRenewalAlertPort alerts, Clock clock) {
-        return new CheckLicenseExpirationService(repository, alerts, clock);
+            EnvironmentalLicenseRepositoryPort repository, LicenseRenewalAlertPort alerts, Clock clock,
+            LicenseScanCoordinationPort coordination) {
+        return new CoordinatedLicenseExpirationService(
+                new CheckLicenseExpirationService(repository, alerts, clock), coordination);
     }
 }

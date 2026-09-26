@@ -33,8 +33,16 @@ public class CheckLicenseExpirationService implements CheckLicenseExpirationUseC
         int page = 0;
         List<EnvironmentalLicense> licenses;
         do {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new IllegalStateException("License scan lost scheduler lease");
+            }
             licenses = repository.findRenewalCandidatesBetween(now, deadline, page++, PAGE_SIZE);
-            licenses.forEach(alerts::notifyRenewalRequired);
+            for (EnvironmentalLicense license : licenses) {
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new IllegalStateException("License scan lost scheduler lease");
+                }
+                alerts.notifyRenewalRequired(license);
+            }
         } while (licenses.size() == PAGE_SIZE);
     }
 }
