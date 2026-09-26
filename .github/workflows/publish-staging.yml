@@ -14,13 +14,13 @@ concurrency:
 jobs:
   publish:
     name: Verify, build once, and publish
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
     outputs:
       image: ${{ steps.image.outputs.name }}
-      digest: ${{ steps.build.outputs.digest }}
+      digest: ${{ steps.resolve.outputs.digest }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -40,16 +40,31 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Refuse to overwrite an immutable tag
+      - name: Check immutable tag in GHCR
+        id: probe
         env:
-          IMAGE: ${{ steps.image.outputs.name }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if docker manifest inspect "$IMAGE:sha-$GITHUB_SHA" >/dev/null 2>&1; then
-            echo "Immutable tag already exists: $IMAGE:sha-$GITHUB_SHA" >&2
-            exit 1
-          fi
+          set -euo pipefail
+          repository=${GITHUB_REPOSITORY,,}
+          registry_token=$(curl --silent --show-error --fail --retry 3 \
+            --user "$GITHUB_ACTOR:$GHCR_TOKEN" --get \
+            --data-urlencode 'service=ghcr.io' \
+            --data-urlencode "scope=repository:$repository:pull" \
+            https://ghcr.io/token | jq -er .token)
+          status=$(curl --silent --show-error --head --retry 3 \
+            --output /dev/null --write-out '%{http_code}' \
+            --header "Authorization: Bearer $registry_token" \
+            --header 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json' \
+            "https://ghcr.io/v2/$repository/manifests/sha-$GITHUB_SHA")
+          case "$status" in
+            200) echo 'exists=true' >> "$GITHUB_OUTPUT"; echo 'mode=reused' >> "$GITHUB_OUTPUT" ;;
+            404) echo 'exists=false' >> "$GITHUB_OUTPUT"; echo 'mode=published' >> "$GITHUB_OUTPUT" ;;
+            *) echo "GHCR manifest check returned HTTP $status; refusing to build over a possible existing tag." >&2; exit 1 ;;
+          esac
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
       - name: Build and push immutable image
+        if: steps.probe.outputs.exists == 'false'
         id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
@@ -62,18 +77,34 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.title=EcoCity ESG
             org.opencontainers.image.description=EcoCity ESG Spring Boot API
+      - name: Resolve exact digest from GHCR
+        id: resolve
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}
+          EXISTS: ${{ steps.probe.outputs.exists }}
+          BUILD_DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          digest=$(docker buildx imagetools inspect "$IMAGE:sha-$GITHUB_SHA" --format '{{json .Manifest}}' | jq -er .digest)
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          if [[ "$EXISTS" == false && "$digest" != "$BUILD_DIGEST" ]]; then
+            echo 'The GHCR digest differs from the newly published image digest.' >&2
+            exit 1
+          fi
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
       - name: Record publication
         env:
           IMAGE: ${{ steps.image.outputs.name }}
-          DIGEST: ${{ steps.build.outputs.digest }}
+          DIGEST: ${{ steps.resolve.outputs.digest }}
+          MODE: ${{ steps.probe.outputs.mode }}
         run: |
-          printf '### Staging publication\n\n- Commit: `%s`\n- Immutable image: `%s:sha-%s`\n- Digest: `%s`\n' \
-            "$GITHUB_SHA" "$IMAGE" "$GITHUB_SHA" "$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+          printf '### Staging publication\n\n- Commit: `%s`\n- Immutable image: `%s:sha-%s`\n- Digest: `%s`\n- Mode: `%s`\n' \
+            "$GITHUB_SHA" "$IMAGE" "$GITHUB_SHA" "$DIGEST" "$MODE" >> "$GITHUB_STEP_SUMMARY"
 
   smoke:
     name: Pull GHCR digest and smoke test
     needs: publish
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: read
