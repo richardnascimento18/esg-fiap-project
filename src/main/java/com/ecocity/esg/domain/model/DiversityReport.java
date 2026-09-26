@@ -12,6 +12,7 @@ import lombok.Getter;
 public final class DiversityReport {
 
     private final String id;
+    private final Long version;
     private final String department;
     private final int totalEmployees;
     private final double womenPercentage;
@@ -24,6 +25,7 @@ public final class DiversityReport {
     // The builder also restores stored state; write operations below apply business rules.
     @Builder(toBuilder = true)
     private DiversityReport(String id,
+            Long version,
             String department,
             int totalEmployees,
             double womenPercentage,
@@ -33,6 +35,7 @@ public final class DiversityReport {
             String reportingMonth,
             boolean diversityTrainingCompleted) {
         this.id = id;
+        this.version = version;
         this.department = department;
         this.totalEmployees = totalEmployees;
         this.womenPercentage = womenPercentage;
@@ -45,12 +48,12 @@ public final class DiversityReport {
 
     public DiversityReport forCreation() {
         validate();
-        return toBuilder().id(null).build();
+        return toBuilder().id(null).version(null).build();
     }
 
     public DiversityReport updateWith(DiversityReport replacement) {
         replacement.validate();
-        return replacement.toBuilder().id(id).build();
+        return replacement.toBuilder().id(id).version(version).build();
     }
 
     public void validate() {

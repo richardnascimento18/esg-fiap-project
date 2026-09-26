@@ -54,7 +54,7 @@ class WasteCollectionControllerIT extends MongoIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.district", is("Centro")));
 
-        mockMvc.perform(put(BASE_URL + "/{id}", id)
+        mockMvc.perform(put(BASE_URL + "/{id}", id).header("If-Match", "\"0\"")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(buildRequest(40))))
                 .andExpect(status().isOk())

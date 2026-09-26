@@ -28,18 +28,18 @@ class CheckLicenseExpirationServiceTest {
     }
 
     @Test
-    void preservesStrictDeadlineAndIncludesAlreadyExpiredLicenses() {
+    void alertsOnlyUpcomingCandidates() {
         Instant deadline = NOW.plus(Duration.ofDays(30));
-        EnvironmentalLicense expired = license(NOW.minusSeconds(1), LicenseStatus.EXPIRED);
-        EnvironmentalLicense soon = license(deadline.minusNanos(1), LicenseStatus.RENEWAL_IN_PROGRESS);
-        when(repository.findRenewalCandidatesBefore(deadline, 0, 100)).thenReturn(List.of(expired, soon));
+        EnvironmentalLicense dueNow = license(NOW, LicenseStatus.ACTIVE);
+        EnvironmentalLicense soon = license(deadline, LicenseStatus.ACTIVE);
+        when(repository.findRenewalCandidatesBetween(NOW, deadline, 0, 100)).thenReturn(List.of(dueNow, soon));
 
         service.checkExpiringLicenses();
 
-        verify(alerts).notifyRenewalRequired(expired);
+        verify(alerts).notifyRenewalRequired(dueNow);
         verify(alerts).notifyRenewalRequired(soon);
         verifyNoMoreInteractions(alerts);
-        verify(repository).findRenewalCandidatesBefore(deadline, 0, 100);
+        verify(repository).findRenewalCandidatesBetween(NOW, deadline, 0, 100);
         verifyNoMoreInteractions(repository);
     }
 
@@ -47,27 +47,27 @@ class CheckLicenseExpirationServiceTest {
     void processesAllPagesWithoutWritingLicenseStatus() {
         Instant deadline = NOW.plus(Duration.ofDays(30));
         EnvironmentalLicense due = license(NOW, LicenseStatus.ACTIVE);
-        EnvironmentalLicense expired = license(NOW.minusSeconds(1), LicenseStatus.EXPIRED);
-        when(repository.findRenewalCandidatesBefore(deadline, 0, 100)).thenReturn(Collections.nCopies(100, due));
-        when(repository.findRenewalCandidatesBefore(deadline, 1, 100)).thenReturn(List.of(expired));
+        EnvironmentalLicense later = license(NOW.plusSeconds(1), LicenseStatus.ACTIVE);
+        when(repository.findRenewalCandidatesBetween(NOW, deadline, 0, 100)).thenReturn(Collections.nCopies(100, due));
+        when(repository.findRenewalCandidatesBetween(NOW, deadline, 1, 100)).thenReturn(List.of(later));
 
         service.checkExpiringLicenses();
 
-        verify(repository).findRenewalCandidatesBefore(deadline, 0, 100);
-        verify(repository).findRenewalCandidatesBefore(deadline, 1, 100);
+        verify(repository).findRenewalCandidatesBetween(NOW, deadline, 0, 100);
+        verify(repository).findRenewalCandidatesBetween(NOW, deadline, 1, 100);
         verifyNoMoreInteractions(repository);
         verify(alerts, times(100)).notifyRenewalRequired(due);
-        verify(alerts).notifyRenewalRequired(expired);
+        verify(alerts).notifyRenewalRequired(later);
         verifyNoMoreInteractions(alerts);
     }
 
     @Test
     void handlesAnEmptyDatabase() {
         Instant deadline = NOW.plus(Duration.ofDays(30));
-        when(repository.findRenewalCandidatesBefore(deadline, 0, 100)).thenReturn(List.of());
+        when(repository.findRenewalCandidatesBetween(NOW, deadline, 0, 100)).thenReturn(List.of());
         service.checkExpiringLicenses();
         verifyNoInteractions(alerts);
-        verify(repository).findRenewalCandidatesBefore(deadline, 0, 100);
+        verify(repository).findRenewalCandidatesBetween(NOW, deadline, 0, 100);
         verifyNoMoreInteractions(repository);
     }
 }

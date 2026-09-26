@@ -13,6 +13,7 @@ import java.time.Instant;
 public final class WasteCollection {
 
     private final String id;
+    private final Long version;
     private final String district;
     private final WasteType wasteType;
     private final double weightKg;
@@ -24,6 +25,7 @@ public final class WasteCollection {
     // The builder also restores stored state; write operations below apply business rules.
     @Builder(toBuilder = true)
     private WasteCollection(String id,
+            Long version,
             String district,
             WasteType wasteType,
             double weightKg,
@@ -32,6 +34,7 @@ public final class WasteCollection {
             String collectorTeam,
             boolean properlyDisposed) {
         this.id = id;
+        this.version = version;
         this.district = district;
         this.wasteType = wasteType;
         this.weightKg = weightKg;
@@ -43,12 +46,12 @@ public final class WasteCollection {
 
     public WasteCollection forCreation() {
         validate();
-        return toBuilder().id(null).build();
+        return toBuilder().id(null).version(null).build();
     }
 
     public WasteCollection updateWith(WasteCollection replacement) {
         replacement.validate();
-        return replacement.toBuilder().id(id).build();
+        return replacement.toBuilder().id(id).version(version).build();
     }
 
     public void validate() {

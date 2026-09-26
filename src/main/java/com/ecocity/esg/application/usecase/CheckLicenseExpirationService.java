@@ -28,11 +28,12 @@ public class CheckLicenseExpirationService implements CheckLicenseExpirationUseC
 
     @Override
     public void checkExpiringLicenses() {
-        Instant deadline = clock.instant().plus(RENEWAL_WINDOW);
+        Instant now = clock.instant();
+        Instant deadline = now.plus(RENEWAL_WINDOW);
         int page = 0;
         List<EnvironmentalLicense> licenses;
         do {
-            licenses = repository.findRenewalCandidatesBefore(deadline, page++, PAGE_SIZE);
+            licenses = repository.findRenewalCandidatesBetween(now, deadline, page++, PAGE_SIZE);
             licenses.forEach(alerts::notifyRenewalRequired);
         } while (licenses.size() == PAGE_SIZE);
     }

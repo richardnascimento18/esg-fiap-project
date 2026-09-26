@@ -62,7 +62,7 @@ class EnergyConsumptionControllerIT extends MongoIntegrationTest {
                 .andExpect(jsonPath("$.facilityId", is("FAC-IT-001")));
 
         EnergyConsumptionRequest updateRequest = buildRequest(1000, 3000);
-        mockMvc.perform(put(BASE_URL + "/{id}", id)
+        mockMvc.perform(put(BASE_URL + "/{id}", id).header("If-Match", "\"0\"")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())

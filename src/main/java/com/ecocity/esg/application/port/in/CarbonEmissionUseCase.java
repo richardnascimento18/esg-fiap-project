@@ -10,6 +10,8 @@ public interface CarbonEmissionUseCase {
 
     CarbonEmission update(String id, CarbonEmission carbonEmission);
 
+    CarbonEmission update(String id, CarbonEmission carbonEmission, long expectedVersion);
+
     void delete(String id);
 
     CarbonEmission findById(String id);

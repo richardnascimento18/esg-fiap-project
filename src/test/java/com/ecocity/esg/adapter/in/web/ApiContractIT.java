@@ -10,6 +10,7 @@ import org.springframework.test.context.DynamicPropertySource;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@org.springframework.security.test.context.support.WithMockUser(roles = "ADMIN")
 class ApiContractIT extends AbstractApiContractTest {
     @DynamicPropertySource
     static void mongo(DynamicPropertyRegistry registry) {

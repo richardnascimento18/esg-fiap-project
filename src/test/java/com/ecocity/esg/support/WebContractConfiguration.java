@@ -52,7 +52,7 @@ public class WebContractConfiguration {
     EnergyConsumptionRepositoryPort energyConsumptionRepository() {
         var port = mock(EnergyConsumptionRepositoryPort.class);
         var data = new Records<EnergyConsumption>(EnergyConsumption::getId,
-                (item, id) -> item.toBuilder().id(id).build());
+                (item, id) -> item.toBuilder().id(id).version(item.getVersion() == null ? 0L : item.getVersion() + 1).build());
         when(port.save(any())).thenAnswer(call -> data.save(call.getArgument(0)));
         when(port.findById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)));
         when(port.findAll(anyInt(), anyInt())).thenAnswer(call -> data.page(call.getArgument(0), call.getArgument(1)));
@@ -65,7 +65,7 @@ public class WebContractConfiguration {
     WasteCollectionRepositoryPort wasteCollectionRepository() {
         var port = mock(WasteCollectionRepositoryPort.class);
         var data = new Records<WasteCollection>(WasteCollection::getId,
-                (item, id) -> item.toBuilder().id(id).build());
+                (item, id) -> item.toBuilder().id(id).version(item.getVersion() == null ? 0L : item.getVersion() + 1).build());
         when(port.save(any())).thenAnswer(call -> data.save(call.getArgument(0)));
         when(port.findById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)));
         when(port.findAll(anyInt(), anyInt())).thenAnswer(call -> data.page(call.getArgument(0), call.getArgument(1)));
@@ -78,7 +78,7 @@ public class WebContractConfiguration {
     CarbonEmissionRepositoryPort carbonEmissionRepository() {
         var port = mock(CarbonEmissionRepositoryPort.class);
         var data = new Records<CarbonEmission>(CarbonEmission::getId,
-                (item, id) -> item.toBuilder().id(id).build());
+                (item, id) -> item.toBuilder().id(id).version(item.getVersion() == null ? 0L : item.getVersion() + 1).build());
         when(port.save(any())).thenAnswer(call -> data.save(call.getArgument(0)));
         when(port.findById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)));
         when(port.findAll(anyInt(), anyInt())).thenAnswer(call -> data.page(call.getArgument(0), call.getArgument(1)));
@@ -91,7 +91,7 @@ public class WebContractConfiguration {
     DiversityReportRepositoryPort diversityReportRepository() {
         var port = mock(DiversityReportRepositoryPort.class);
         var data = new Records<DiversityReport>(DiversityReport::getId,
-                (item, id) -> item.toBuilder().id(id).build());
+                (item, id) -> item.toBuilder().id(id).version(item.getVersion() == null ? 0L : item.getVersion() + 1).build());
         when(port.save(any())).thenAnswer(call -> data.save(call.getArgument(0)));
         when(port.findById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)));
         when(port.findAll(anyInt(), anyInt())).thenAnswer(call -> data.page(call.getArgument(0), call.getArgument(1)));
@@ -104,7 +104,7 @@ public class WebContractConfiguration {
     EnvironmentalLicenseRepositoryPort environmentalLicenseRepository() {
         var port = mock(EnvironmentalLicenseRepositoryPort.class);
         var data = new Records<EnvironmentalLicense>(EnvironmentalLicense::getId,
-                (item, id) -> item.toBuilder().id(id).build());
+                (item, id) -> item.toBuilder().id(id).version(item.getVersion() == null ? 0L : item.getVersion() + 1).build());
         when(port.save(any())).thenAnswer(call -> data.save(call.getArgument(0)));
         when(port.findById(anyString())).thenAnswer(call -> data.find(call.getArgument(0)));
         when(port.findAll(anyInt(), anyInt())).thenAnswer(call -> data.page(call.getArgument(0), call.getArgument(1)));

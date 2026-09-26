@@ -13,6 +13,9 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import com.ecocity.esg.domain.exception.StaleResourceException;
+import org.springframework.web.server.ResponseStatusException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -57,6 +60,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateKeyException.class)
     public ResponseEntity<ApiErrorResponse> handleDuplicate(DuplicateKeyException ex, HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, "Registro ja existente", request, null);
+    }
+
+    @ExceptionHandler(StaleResourceException.class)
+    public ResponseEntity<ApiErrorResponse> handleStale(StaleResourceException ex, HttpServletRequest request) {
+        return build(HttpStatus.PRECONDITION_FAILED, "Versao desatualizada", request, null);
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ApiErrorResponse> handleConcurrentWrite(OptimisticLockingFailureException ex,
+                                                                     HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "Registro alterado simultaneamente", request, null);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiErrorResponse> handleHttpStatus(ResponseStatusException ex, HttpServletRequest request) {
+        return build(HttpStatus.valueOf(ex.getStatusCode().value()), ex.getReason(), request, null);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

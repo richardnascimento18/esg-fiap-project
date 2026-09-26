@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Getter
@@ -19,6 +20,8 @@ public class CarbonEmissionDocument {
 
     @Id
     private String id;
+    @Version
+    private Long version;
     private String sourceFacility;
     private EmissionType emissionType;
     private double emissionTonnes;

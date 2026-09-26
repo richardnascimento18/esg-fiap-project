@@ -10,6 +10,7 @@ public class WasteCollectionPersistenceMapper {
     public WasteCollectionDocument toDocument(WasteCollection domain) {
         return WasteCollectionDocument.builder()
                 .id(domain.getId())
+                .version(domain.getVersion())
                 .district(domain.getDistrict())
                 .wasteType(domain.getWasteType())
                 .weightKg(domain.getWeightKg())
@@ -23,6 +24,7 @@ public class WasteCollectionPersistenceMapper {
     public WasteCollection toDomain(WasteCollectionDocument document) {
         return WasteCollection.builder()
                 .id(document.getId())
+                .version(document.getVersion())
                 .district(document.getDistrict())
                 .wasteType(document.getWasteType())
                 .weightKg(document.getWeightKg())

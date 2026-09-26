@@ -43,8 +43,9 @@ public class EnvironmentalLicenseRepositoryAdapter implements EnvironmentalLicen
     }
 
     @Override
-    public List<EnvironmentalLicense> findRenewalCandidatesBefore(Instant deadline, int page, int size) {
-        return mongoRepository.findByExpirationDateBeforeAndStatusNot(deadline, LicenseStatus.SUSPENDED,
+    public List<EnvironmentalLicense> findRenewalCandidatesBetween(Instant now, Instant deadline, int page, int size) {
+        return mongoRepository.findRenewalCandidates(
+                now, deadline, List.of(LicenseStatus.SUSPENDED, LicenseStatus.RENEWAL_IN_PROGRESS),
                 PageRequest.of(page, size, Sort.by("id").ascending())).stream().map(mapper::toDomain).toList();
     }
 

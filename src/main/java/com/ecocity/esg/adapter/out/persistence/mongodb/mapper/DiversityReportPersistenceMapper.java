@@ -10,6 +10,7 @@ public class DiversityReportPersistenceMapper {
     public DiversityReportDocument toDocument(DiversityReport domain) {
         return DiversityReportDocument.builder()
                 .id(domain.getId())
+                .version(domain.getVersion())
                 .department(domain.getDepartment())
                 .totalEmployees(domain.getTotalEmployees())
                 .womenPercentage(domain.getWomenPercentage())
@@ -24,6 +25,7 @@ public class DiversityReportPersistenceMapper {
     public DiversityReport toDomain(DiversityReportDocument document) {
         return DiversityReport.builder()
                 .id(document.getId())
+                .version(document.getVersion())
                 .department(document.getDepartment())
                 .totalEmployees(document.getTotalEmployees())
                 .womenPercentage(document.getWomenPercentage())

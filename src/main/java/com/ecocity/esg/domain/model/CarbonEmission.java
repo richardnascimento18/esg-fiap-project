@@ -11,6 +11,7 @@ import lombok.Getter;
 public final class CarbonEmission {
 
     private final String id;
+    private final Long version;
     private final String sourceFacility;
     private final EmissionType emissionType;
     private final double emissionTonnes;
@@ -22,6 +23,7 @@ public final class CarbonEmission {
     // The builder also restores stored state; write operations below apply business rules.
     @Builder(toBuilder = true)
     private CarbonEmission(String id,
+            Long version,
             String sourceFacility,
             EmissionType emissionType,
             double emissionTonnes,
@@ -30,6 +32,7 @@ public final class CarbonEmission {
             String reportingPeriod,
             String auditedBy) {
         this.id = id;
+        this.version = version;
         this.sourceFacility = sourceFacility;
         this.emissionType = emissionType;
         this.emissionTonnes = emissionTonnes;
@@ -41,12 +44,12 @@ public final class CarbonEmission {
 
     public CarbonEmission forCreation() {
         validate();
-        return toBuilder().id(null).compensated(compensationTonnes >= emissionTonnes).build();
+        return toBuilder().id(null).version(null).compensated(compensationTonnes >= emissionTonnes).build();
     }
 
     public CarbonEmission updateWith(CarbonEmission replacement) {
         replacement.validate();
-        return replacement.toBuilder().id(id).compensated(replacement.compensationTonnes >= replacement.emissionTonnes).build();
+        return replacement.toBuilder().id(id).version(version).compensated(replacement.compensationTonnes >= replacement.emissionTonnes).build();
     }
 
     public void validate() {

@@ -14,7 +14,7 @@ public interface EnvironmentalLicenseRepositoryPort {
 
     List<EnvironmentalLicense> findAll(int page, int size);
 
-    List<EnvironmentalLicense> findRenewalCandidatesBefore(Instant deadline, int page, int size);
+    List<EnvironmentalLicense> findRenewalCandidatesBetween(Instant now, Instant deadline, int page, int size);
 
     void deleteById(String id);
 

@@ -16,6 +16,7 @@ import java.util.Map;
 public final class EnergyConsumption {
 
     private final String id;
+    private final Long version;
     private final String facilityId;
     private final String facilityName;
     private final String city;
@@ -29,6 +30,7 @@ public final class EnergyConsumption {
     // The builder also restores stored state; write operations below apply business rules.
     @Builder(toBuilder = true)
     private EnergyConsumption(String id,
+            Long version,
             String facilityId,
             String facilityName,
             String city,
@@ -39,6 +41,7 @@ public final class EnergyConsumption {
             Instant readingTimestamp,
             Map<String, Object> sensorMetadata) {
         this.id = id;
+        this.version = version;
         this.facilityId = facilityId;
         this.facilityName = facilityName;
         this.city = city;
@@ -53,12 +56,12 @@ public final class EnergyConsumption {
 
     public EnergyConsumption forCreation() {
         validate();
-        return toBuilder().id(null).alertTriggered(consumptionKwh > thresholdKwh).build();
+        return toBuilder().id(null).version(null).alertTriggered(consumptionKwh > thresholdKwh).build();
     }
 
     public EnergyConsumption updateWith(EnergyConsumption replacement) {
         replacement.validate();
-        return replacement.toBuilder().id(id).alertTriggered(replacement.consumptionKwh > replacement.thresholdKwh).build();
+        return replacement.toBuilder().id(id).version(version).alertTriggered(replacement.consumptionKwh > replacement.thresholdKwh).build();
     }
 
     public void validate() {

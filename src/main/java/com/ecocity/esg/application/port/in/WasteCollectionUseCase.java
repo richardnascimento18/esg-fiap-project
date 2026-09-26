@@ -10,6 +10,8 @@ public interface WasteCollectionUseCase {
 
     WasteCollection update(String id, WasteCollection wasteCollection);
 
+    WasteCollection update(String id, WasteCollection wasteCollection, long expectedVersion);
+
     void delete(String id);
 
     WasteCollection findById(String id);

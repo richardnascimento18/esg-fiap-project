@@ -30,6 +30,16 @@ public class WasteCollectionService implements WasteCollectionUseCase {
     }
 
     @Override
+    public WasteCollection update(String id, WasteCollection wasteCollection, long expectedVersion) {
+        wasteCollection.validate();
+        WasteCollection existing = findById(id);
+        if (existing.getVersion() == null || existing.getVersion() != expectedVersion) {
+            throw new com.ecocity.esg.domain.exception.StaleResourceException();
+        }
+        return repositoryPort.save(existing.updateWith(wasteCollection));
+    }
+
+    @Override
     public void delete(String id) {
         assertExists(id);
         repositoryPort.deleteById(id);

@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Getter
@@ -18,6 +19,8 @@ public class DiversityReportDocument {
 
     @Id
     private String id;
+    @Version
+    private Long version;
     private String department;
     private int totalEmployees;
     private double womenPercentage;

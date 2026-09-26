@@ -10,6 +10,7 @@ public class EnergyConsumptionPersistenceMapper {
     public EnergyConsumptionDocument toDocument(EnergyConsumption domain) {
         return EnergyConsumptionDocument.builder()
                 .id(domain.getId())
+                .version(domain.getVersion())
                 .facilityId(domain.getFacilityId())
                 .facilityName(domain.getFacilityName())
                 .city(domain.getCity())
@@ -25,6 +26,7 @@ public class EnergyConsumptionPersistenceMapper {
     public EnergyConsumption toDomain(EnergyConsumptionDocument document) {
         return EnergyConsumption.builder()
                 .id(document.getId())
+                .version(document.getVersion())
                 .facilityId(document.getFacilityId())
                 .facilityName(document.getFacilityName())
                 .city(document.getCity())

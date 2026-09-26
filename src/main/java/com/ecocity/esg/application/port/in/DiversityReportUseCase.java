@@ -10,6 +10,8 @@ public interface DiversityReportUseCase {
 
     DiversityReport update(String id, DiversityReport diversityReport);
 
+    DiversityReport update(String id, DiversityReport diversityReport, long expectedVersion);
+
     void delete(String id);
 
     DiversityReport findById(String id);

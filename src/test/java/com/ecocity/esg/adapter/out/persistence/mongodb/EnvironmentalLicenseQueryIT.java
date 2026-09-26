@@ -20,15 +20,17 @@ class EnvironmentalLicenseQueryIT extends MongoIntegrationTest {
     void renewalQueryFiltersAtDatabase() {
         String prefix = "QUERY-" + UUID.randomUUID();
         Instant deadline = Instant.parse("2026-10-01T00:00:00Z");
+        Instant now = deadline.minusSeconds(60);
         save(prefix + "-A", deadline.minusSeconds(1), LicenseStatus.ACTIVE);
         save(prefix + "-B", deadline.minusSeconds(1), LicenseStatus.RENEWAL_IN_PROGRESS);
         save(prefix + "-C", deadline.minusSeconds(1), LicenseStatus.SUSPENDED);
         save(prefix + "-D", deadline, LicenseStatus.ACTIVE);
+        save(prefix + "-E", now.minusSeconds(1), LicenseStatus.ACTIVE);
 
-        var candidates = repository.findRenewalCandidatesBefore(deadline, 0, 100).stream()
+        var candidates = repository.findRenewalCandidatesBetween(now, deadline, 0, 100).stream()
                 .filter(license -> license.getLicenseNumber().startsWith(prefix)).toList();
         assertThat(candidates).extracting(EnvironmentalLicense::getLicenseNumber)
-                .containsExactlyInAnyOrder(prefix + "-A", prefix + "-B");
+                .containsExactlyInAnyOrder(prefix + "-A", prefix + "-D");
     }
 
     private void save(String number, Instant expiration, LicenseStatus status) {

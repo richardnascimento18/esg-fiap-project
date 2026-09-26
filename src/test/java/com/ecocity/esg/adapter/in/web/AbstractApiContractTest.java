@@ -66,7 +66,7 @@ abstract class AbstractApiContractTest {
         }
         mvc.perform(get(base + "/{id}", id)).andExpect(status().isOk())
                 .andExpect(result -> assertThat(mapper.readTree(result.getResponse().getContentAsByteArray())).isEqualTo(created));
-        mvc.perform(put(base + "/{id}", id).contentType("application/json").content(resource.payload()))
+        mvc.perform(put(base + "/{id}", id).header("If-Match", "\"0\"").contentType("application/json").content(resource.payload()))
                 .andExpect(status().isOk()).andExpect(result -> assertThat(mapper.readTree(result.getResponse().getContentAsByteArray())).isEqualTo(created));
         JsonNode firstPage = mapper.readTree(mvc.perform(get(base).param("page", "0").param("size", "1"))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray());

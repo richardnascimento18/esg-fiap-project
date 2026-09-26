@@ -32,7 +32,7 @@ class ApiErrorContractTest {
                  "issuingAuthority":"CETESB"}
                 """;
         for (var request : new org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder[] {
-                post("/api/v1/environmental-licenses"), put("/api/v1/environmental-licenses/missing")}) {
+                post("/api/v1/environmental-licenses"), put("/api/v1/environmental-licenses/missing").header("If-Match", "\"0\"")}) {
             mvc.perform(request.contentType("application/json").content(invalid))
                     .andExpect(status().isUnprocessableEntity())
                     .andExpect(jsonPath("$.status").value(422))

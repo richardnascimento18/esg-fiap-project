@@ -18,6 +18,7 @@ import java.util.Map;
 public final class EnvironmentalLicense {
 
     private final String id;
+    private final Long version;
     private final String licenseNumber;
     private final String facility;
     private final LicenseType licenseType;
@@ -30,6 +31,7 @@ public final class EnvironmentalLicense {
     // The builder also restores stored state; write operations below apply business rules.
     @Builder(toBuilder = true)
     private EnvironmentalLicense(String id,
+            Long version,
             String licenseNumber,
             String facility,
             LicenseType licenseType,
@@ -39,6 +41,7 @@ public final class EnvironmentalLicense {
             String issuingAuthority,
             Map<String, Object> additionalRequirements) {
         this.id = id;
+        this.version = version;
         this.licenseNumber = licenseNumber;
         this.facility = facility;
         this.licenseType = licenseType;
@@ -52,14 +55,14 @@ public final class EnvironmentalLicense {
 
     public EnvironmentalLicense forCreation(Instant now) {
         validate();
-        return toBuilder().id(null).status(effectiveStatusAt(now)).build();
+        return toBuilder().id(null).version(null).status(effectiveStatusAt(now)).build();
     }
 
     public EnvironmentalLicense updateWith(EnvironmentalLicense replacement, Instant now) {
         replacement.validate();
         LicenseStatus retained = status == LicenseStatus.SUSPENDED || status == LicenseStatus.RENEWAL_IN_PROGRESS
                 ? status : LicenseStatus.ACTIVE;
-        return replacement.toBuilder().id(id).status(retained).build().withEffectiveStatusAt(now);
+        return replacement.toBuilder().id(id).version(version).status(retained).build().withEffectiveStatusAt(now);
     }
 
     public void validate() {

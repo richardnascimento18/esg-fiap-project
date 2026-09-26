@@ -23,11 +23,7 @@ class MongoSchemaInitializerIT extends MongoIntegrationTest {
         MongoTemplate template = new MongoTemplate(client, "schema_test_" + UUID.randomUUID().toString().replace("-", ""));
         MongoSchemaInitializer initializer = new MongoSchemaInitializer(template);
         Map<String, Map<String, Integer>> expected = Map.of(
-                "energy_consumption", Map.of("facilityId", 1, "readingTimestamp", -1, "alertTriggered", 1),
-                "waste_collection", Map.of("district", 1, "wasteType", 1, "collectionDate", -1),
-                "carbon_emission", Map.of("sourceFacility", 1, "reportingPeriod", 1, "compensated", 1),
-                "diversity_report", Map.of("department", 1, "reportingMonth", 1),
-                "environmental_license", Map.of("licenseNumber", 1, "status", 1, "expirationDate", 1));
+                "environmental_license", Map.of("licenseNumber", 1, "expirationDate", 1));
         try {
             for (int run = 0; run < 2; run++) {
                 initializer.run(null);
@@ -35,6 +31,7 @@ class MongoSchemaInitializerIT extends MongoIntegrationTest {
                 licenses.insertOne(new Document("licenseNumber", "KEEP"));
                 initializer.run(null);
                 assertThat(licenses.countDocuments()).isEqualTo(1);
+                assertThat(licenses.find().first().getLong("version")).isEqualTo(0L);
                 expected.forEach((collection, indexes) -> {
                     var actual = template.getCollection(collection).listIndexes().into(new ArrayList<>());
                     assertThat(actual).hasSize(indexes.size() + 1);

@@ -11,6 +11,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import com.ecocity.esg.adapter.in.web.config.EntityTags;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,8 +34,9 @@ public class EnvironmentalLicenseController {
     @Operation(summary = "Cadastrar licença ambiental")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public EnvironmentalLicenseResponse create(@Valid @RequestBody EnvironmentalLicenseRequest request) {
-        return mapper.toResponse(useCase.create(mapper.toDomain(request)));
+    public ResponseEntity<EnvironmentalLicenseResponse> create(@Valid @RequestBody EnvironmentalLicenseRequest request) {
+        var created = useCase.create(mapper.toDomain(request));
+        return ResponseEntity.status(HttpStatus.CREATED).eTag(EntityTags.forVersion(created.getVersion())).body(mapper.toResponse(created));
     }
 
     @Operation(summary = "Listar registros de licença ambiental",
@@ -46,15 +49,18 @@ public class EnvironmentalLicenseController {
 
     @Operation(summary = "Consultar licença ambiental pelo identificador")
     @GetMapping("/{id}")
-    public EnvironmentalLicenseResponse findById(@PathVariable String id) {
-        return mapper.toResponse(useCase.findById(id));
+    public ResponseEntity<EnvironmentalLicenseResponse> findById(@PathVariable String id) {
+        var found = useCase.findById(id);
+        return ResponseEntity.ok().eTag(EntityTags.forVersion(found.getVersion())).body(mapper.toResponse(found));
     }
 
     @Operation(summary = "Atualizar licença ambiental",
             description = "Substitui os campos editáveis do registro e aplica as regras de negócio.")
     @PutMapping("/{id}")
-    public EnvironmentalLicenseResponse update(@PathVariable String id, @Valid @RequestBody EnvironmentalLicenseRequest request) {
-        return mapper.toResponse(useCase.update(id, mapper.toDomain(request)));
+    public ResponseEntity<EnvironmentalLicenseResponse> update(@PathVariable String id, @Valid @RequestBody EnvironmentalLicenseRequest request,
+                                               @RequestHeader(value = "If-Match", required = false) String ifMatch) {
+        var updated = useCase.update(id, mapper.toDomain(request), EntityTags.requiredVersion(ifMatch));
+        return ResponseEntity.ok().eTag(EntityTags.forVersion(updated.getVersion())).body(mapper.toResponse(updated));
     }
 
     @Operation(summary = "Excluir licença ambiental")

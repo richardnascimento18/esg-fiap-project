@@ -34,6 +34,16 @@ public class EnvironmentalLicenseService implements EnvironmentalLicenseUseCase 
     }
 
     @Override
+    public EnvironmentalLicense update(String id, EnvironmentalLicense environmentalLicense, long expectedVersion) {
+        environmentalLicense.validate();
+        EnvironmentalLicense existing = findById(id);
+        if (existing.getVersion() == null || existing.getVersion() != expectedVersion) {
+            throw new com.ecocity.esg.domain.exception.StaleResourceException();
+        }
+        return repositoryPort.save(existing.updateWith(environmentalLicense, clock.instant()));
+    }
+
+    @Override
     public void delete(String id) {
         assertExists(id);
         repositoryPort.deleteById(id);

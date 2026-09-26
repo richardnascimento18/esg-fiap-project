@@ -10,6 +10,7 @@ public class CarbonEmissionPersistenceMapper {
     public CarbonEmissionDocument toDocument(CarbonEmission domain) {
         return CarbonEmissionDocument.builder()
                 .id(domain.getId())
+                .version(domain.getVersion())
                 .sourceFacility(domain.getSourceFacility())
                 .emissionType(domain.getEmissionType())
                 .emissionTonnes(domain.getEmissionTonnes())
@@ -23,6 +24,7 @@ public class CarbonEmissionPersistenceMapper {
     public CarbonEmission toDomain(CarbonEmissionDocument document) {
         return CarbonEmission.builder()
                 .id(document.getId())
+                .version(document.getVersion())
                 .sourceFacility(document.getSourceFacility())
                 .emissionType(document.getEmissionType())
                 .emissionTonnes(document.getEmissionTonnes())

@@ -10,6 +10,7 @@ public class EnvironmentalLicensePersistenceMapper {
     public EnvironmentalLicenseDocument toDocument(EnvironmentalLicense domain) {
         return EnvironmentalLicenseDocument.builder()
                 .id(domain.getId())
+                .version(domain.getVersion())
                 .licenseNumber(domain.getLicenseNumber())
                 .facility(domain.getFacility())
                 .licenseType(domain.getLicenseType())
@@ -24,6 +25,7 @@ public class EnvironmentalLicensePersistenceMapper {
     public EnvironmentalLicense toDomain(EnvironmentalLicenseDocument document) {
         return EnvironmentalLicense.builder()
                 .id(document.getId())
+                .version(document.getVersion())
                 .licenseNumber(document.getLicenseNumber())
                 .facility(document.getFacility())
                 .licenseType(document.getLicenseType())

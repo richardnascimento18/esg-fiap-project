@@ -29,6 +29,16 @@ public class EnergyConsumptionService implements EnergyConsumptionUseCase {
     }
 
     @Override
+    public EnergyConsumption update(String id, EnergyConsumption energyConsumption, long expectedVersion) {
+        energyConsumption.validate();
+        EnergyConsumption existing = findById(id);
+        if (existing.getVersion() == null || existing.getVersion() != expectedVersion) {
+            throw new com.ecocity.esg.domain.exception.StaleResourceException();
+        }
+        return repositoryPort.save(existing.updateWith(energyConsumption));
+    }
+
+    @Override
     public void delete(String id) {
         assertExists(id);
         repositoryPort.deleteById(id);

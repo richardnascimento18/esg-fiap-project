@@ -11,6 +11,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import com.ecocity.esg.adapter.in.web.config.EntityTags;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,8 +34,9 @@ public class CarbonEmissionController {
     @Operation(summary = "Cadastrar emissão de carbono")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CarbonEmissionResponse create(@Valid @RequestBody CarbonEmissionRequest request) {
-        return mapper.toResponse(useCase.create(mapper.toDomain(request)));
+    public ResponseEntity<CarbonEmissionResponse> create(@Valid @RequestBody CarbonEmissionRequest request) {
+        var created = useCase.create(mapper.toDomain(request));
+        return ResponseEntity.status(HttpStatus.CREATED).eTag(EntityTags.forVersion(created.getVersion())).body(mapper.toResponse(created));
     }
 
     @Operation(summary = "Listar registros de emissão de carbono",
@@ -46,15 +49,18 @@ public class CarbonEmissionController {
 
     @Operation(summary = "Consultar emissão de carbono pelo identificador")
     @GetMapping("/{id}")
-    public CarbonEmissionResponse findById(@PathVariable String id) {
-        return mapper.toResponse(useCase.findById(id));
+    public ResponseEntity<CarbonEmissionResponse> findById(@PathVariable String id) {
+        var found = useCase.findById(id);
+        return ResponseEntity.ok().eTag(EntityTags.forVersion(found.getVersion())).body(mapper.toResponse(found));
     }
 
     @Operation(summary = "Atualizar emissão de carbono",
             description = "Substitui os campos editáveis do registro e aplica as regras de negócio.")
     @PutMapping("/{id}")
-    public CarbonEmissionResponse update(@PathVariable String id, @Valid @RequestBody CarbonEmissionRequest request) {
-        return mapper.toResponse(useCase.update(id, mapper.toDomain(request)));
+    public ResponseEntity<CarbonEmissionResponse> update(@PathVariable String id, @Valid @RequestBody CarbonEmissionRequest request,
+                                               @RequestHeader(value = "If-Match", required = false) String ifMatch) {
+        var updated = useCase.update(id, mapper.toDomain(request), EntityTags.requiredVersion(ifMatch));
+        return ResponseEntity.ok().eTag(EntityTags.forVersion(updated.getVersion())).body(mapper.toResponse(updated));
     }
 
     @Operation(summary = "Excluir emissão de carbono")
