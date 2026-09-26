@@ -153,7 +153,7 @@ public class DataSeeder implements ApplicationRunner {
                     .emissionTonnes(emission)
                     .compensationTonnes(Math.max(compensation, 0))
                     .compensated(compensation >= emission)
-                    .reportingPeriod("2026-Q%d".formatted((i % 4) + 1))
+                    .reportingPeriod(com.ecocity.esg.domain.model.ReportingQuarter.parse("2026-Q%d".formatted((i % 4) + 1)))
                     .auditedBy("Auditoria Ambiental Municipal")
                     .build();
             carbonUseCase.create(sample);

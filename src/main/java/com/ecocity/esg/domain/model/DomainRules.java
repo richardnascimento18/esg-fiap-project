@@ -7,6 +7,18 @@ import java.time.YearMonth;
 final class DomainRules {
     private DomainRules() { }
 
+    static void requiredText(String value, String field) {
+        if (value == null || value.isBlank()) {
+            throw new DomainValidationException(field + " e obrigatorio");
+        }
+    }
+
+    static void required(Object value, String field) {
+        if (value == null) {
+            throw new DomainValidationException(field + " e obrigatorio");
+        }
+    }
+
     static void nonNegative(double value, String field) {
         if (!Double.isFinite(value) || value < 0) {
             throw new DomainValidationException(field + " deve ser um numero finito nao negativo");
@@ -27,9 +39,4 @@ final class DomainRules {
         }
     }
 
-    static void reportingQuarter(String value) {
-        if (value == null || !value.matches("[0-9]{4}-Q[1-4]")) {
-            throw new DomainValidationException("reportingPeriod deve usar AAAA-Q1 a AAAA-Q4");
-        }
-    }
 }

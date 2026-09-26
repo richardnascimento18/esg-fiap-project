@@ -55,6 +55,10 @@ public final class WasteCollection {
     }
 
     public void validate() {
+        DomainRules.requiredText(district, "district");
+        DomainRules.required(wasteType, "wasteType");
+        DomainRules.required(collectionDate, "collectionDate");
+        DomainRules.requiredText(collectorTeam, "collectorTeam");
         DomainRules.nonNegative(weightKg, "weightKg");
         DomainRules.percentage(recyclingRatePercentage, "recyclingRatePercentage");
     }

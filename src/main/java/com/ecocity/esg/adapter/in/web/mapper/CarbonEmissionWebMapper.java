@@ -3,6 +3,7 @@ package com.ecocity.esg.adapter.in.web.mapper;
 import com.ecocity.esg.adapter.in.web.dto.request.CarbonEmissionRequest;
 import com.ecocity.esg.adapter.in.web.dto.response.CarbonEmissionResponse;
 import com.ecocity.esg.domain.model.CarbonEmission;
+import com.ecocity.esg.domain.model.ReportingQuarter;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,7 +15,7 @@ public class CarbonEmissionWebMapper {
                 .emissionType(request.getEmissionType())
                 .emissionTonnes(request.getEmissionTonnes())
                 .compensationTonnes(request.getCompensationTonnes())
-                .reportingPeriod(request.getReportingPeriod())
+                .reportingPeriod(ReportingQuarter.parse(request.getReportingPeriod()))
                 .auditedBy(request.getAuditedBy())
                 .build();
     }
@@ -27,7 +28,7 @@ public class CarbonEmissionWebMapper {
                 .emissionTonnes(domain.getEmissionTonnes())
                 .compensationTonnes(domain.getCompensationTonnes())
                 .compensated(domain.isCompensated())
-                .reportingPeriod(domain.getReportingPeriod())
+                .reportingPeriod(domain.getReportingPeriod().toString())
                 .auditedBy(domain.getAuditedBy())
                 .build();
     }

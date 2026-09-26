@@ -2,6 +2,7 @@ package com.ecocity.esg.adapter.out.persistence.mongodb.mapper;
 
 import com.ecocity.esg.adapter.out.persistence.mongodb.document.CarbonEmissionDocument;
 import com.ecocity.esg.domain.model.CarbonEmission;
+import com.ecocity.esg.domain.model.ReportingQuarter;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -16,7 +17,7 @@ public class CarbonEmissionPersistenceMapper {
                 .emissionTonnes(domain.getEmissionTonnes())
                 .compensationTonnes(domain.getCompensationTonnes())
                 .compensated(domain.isCompensated())
-                .reportingPeriod(domain.getReportingPeriod())
+                .reportingPeriod(domain.getReportingPeriod().toString())
                 .auditedBy(domain.getAuditedBy())
                 .build();
     }
@@ -30,7 +31,7 @@ public class CarbonEmissionPersistenceMapper {
                 .emissionTonnes(document.getEmissionTonnes())
                 .compensationTonnes(document.getCompensationTonnes())
                 .compensated(document.isCompensated())
-                .reportingPeriod(document.getReportingPeriod())
+                .reportingPeriod(ReportingQuarter.parse(document.getReportingPeriod()))
                 .auditedBy(document.getAuditedBy())
                 .build();
     }

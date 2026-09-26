@@ -65,6 +65,11 @@ public final class EnergyConsumption {
     }
 
     public void validate() {
+        DomainRules.requiredText(facilityId, "facilityId");
+        DomainRules.requiredText(facilityName, "facilityName");
+        DomainRules.requiredText(city, "city");
+        DomainRules.required(sourceType, "sourceType");
+        DomainRules.required(readingTimestamp, "readingTimestamp");
         DomainRules.nonNegative(consumptionKwh, "consumptionKwh");
         DomainRules.nonNegative(thresholdKwh, "thresholdKwh");
     }

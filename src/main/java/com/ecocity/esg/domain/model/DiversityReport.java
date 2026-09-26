@@ -57,6 +57,7 @@ public final class DiversityReport {
     }
 
     public void validate() {
+        DomainRules.requiredText(department, "department");
         if (totalEmployees < 0) {
             throw new DomainValidationException("totalEmployees deve ser nao negativo");
         }

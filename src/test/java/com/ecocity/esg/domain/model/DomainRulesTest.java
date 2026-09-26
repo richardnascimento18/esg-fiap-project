@@ -13,10 +13,35 @@ class DomainRulesTest {
 
     private static final Instant NOW = Instant.parse("2026-09-07T12:00:00Z");
 
+
+    private static EnergyConsumption.EnergyConsumptionBuilder energy() {
+        return EnergyConsumption.builder().facilityId("F1").facilityName("Facility").city("City")
+                .sourceType(EnergySourceType.SOLAR).readingTimestamp(NOW);
+    }
+
+    private static CarbonEmission.CarbonEmissionBuilder carbon() {
+        return CarbonEmission.builder().sourceFacility("Facility").emissionType(EmissionType.CO2)
+                .reportingPeriod(ReportingQuarter.parse("2026-Q3")).auditedBy("Auditor");
+    }
+
+    private static EnvironmentalLicense.EnvironmentalLicenseBuilder license() {
+        return EnvironmentalLicense.builder().licenseNumber("LIC-1").facility("Facility")
+                .licenseType(LicenseType.OPERATION).issuingAuthority("Authority");
+    }
+
+    private static WasteCollection.WasteCollectionBuilder waste() {
+        return WasteCollection.builder().district("Centro").wasteType(WasteType.RECYCLABLE)
+                .collectionDate(NOW).collectorTeam("Team");
+    }
+
+    private static DiversityReport.DiversityReportBuilder diversity() {
+        return DiversityReport.builder().department("People");
+    }
+
     @Test
     void energyEqualityDoesNotTriggerAnAlertAndUpdatesPreserveIdentity() {
-        EnergyConsumption existing = EnergyConsumption.builder().id("stored").consumptionKwh(1).thresholdKwh(10).build();
-        EnergyConsumption replacement = EnergyConsumption.builder().id("incoming").consumptionKwh(10)
+        EnergyConsumption existing = energy().id("stored").consumptionKwh(1).thresholdKwh(10).build();
+        EnergyConsumption replacement = energy().id("incoming").consumptionKwh(10)
                 .thresholdKwh(10).alertTriggered(true).build();
         EnergyConsumption updated = existing.updateWith(replacement);
         assertThat(updated.getId()).isEqualTo("stored");
@@ -27,14 +52,14 @@ class DomainRulesTest {
 
     @Test
     void exactCarbonCompensationIsSufficient() {
-        CarbonEmission input = CarbonEmission.builder().emissionTonnes(10).compensationTonnes(10).reportingPeriod("2026-Q3").build();
+        CarbonEmission input = carbon().emissionTonnes(10).compensationTonnes(10).reportingPeriod(ReportingQuarter.parse("2026-Q3")).build();
         assertThat(input.forCreation().isCompensated()).isTrue();
         assertThat(input.updateWith(input.toBuilder().compensationTonnes(9).build()).isCompensated()).isFalse();
     }
 
     @Test
     void licenseStatusUsesStrictExpirationAndPreservesSuspension() {
-        EnvironmentalLicense license = EnvironmentalLicense.builder().issueDate(NOW.minusSeconds(60))
+        EnvironmentalLicense license = license().issueDate(NOW.minusSeconds(60))
                 .expirationDate(NOW).status(LicenseStatus.RENEWAL_IN_PROGRESS).build();
         assertThat(license.forCreation(NOW).getStatus()).isEqualTo(LicenseStatus.RENEWAL_IN_PROGRESS);
         assertThat(license.forCreation(NOW.plusNanos(1)).getStatus()).isEqualTo(LicenseStatus.EXPIRED);
@@ -45,7 +70,7 @@ class DomainRulesTest {
 
     @Test
     void licenseUpdatesPreserveSuspension() {
-        EnvironmentalLicense stored = EnvironmentalLicense.builder().id("stored").status(LicenseStatus.SUSPENDED)
+        EnvironmentalLicense stored = license().id("stored").status(LicenseStatus.SUSPENDED)
                 .issueDate(NOW.minusSeconds(60)).expirationDate(NOW.plusSeconds(60)).build();
         EnvironmentalLicense request = stored.toBuilder().id("incoming").status(null).build();
         EnvironmentalLicense updated = stored.updateWith(request, NOW);
@@ -56,7 +81,7 @@ class DomainRulesTest {
 
     @Test
     void invalidDatesKeepTheExistingErrorMessage() {
-        EnvironmentalLicense invalid = EnvironmentalLicense.builder().issueDate(NOW)
+        EnvironmentalLicense invalid = license().issueDate(NOW)
                 .expirationDate(NOW.minusSeconds(1)).build();
         assertThatThrownBy(() -> invalid.forCreation(NOW)).isInstanceOf(DomainValidationException.class)
                 .hasMessage("expirationDate nao pode ser anterior a issueDate");
@@ -78,21 +103,31 @@ class DomainRulesTest {
 
     @Test
     void measurementsAndReportingPeriodsAreValidatedWithoutHttp() {
-        assertThatThrownBy(() -> EnergyConsumption.builder().consumptionKwh(-1).build().forCreation())
+        assertThatThrownBy(() -> energy().consumptionKwh(-1).build().forCreation())
                 .isInstanceOf(DomainValidationException.class);
-        assertThatThrownBy(() -> EnergyConsumption.builder().thresholdKwh(Double.NaN).build().forCreation())
+        assertThatThrownBy(() -> energy().thresholdKwh(Double.NaN).build().forCreation())
                 .isInstanceOf(DomainValidationException.class);
-        assertThatThrownBy(() -> CarbonEmission.builder().reportingPeriod("2026-Q5").build().forCreation())
+        assertThatThrownBy(() -> carbon().reportingPeriod(ReportingQuarter.parse("2026-Q5")).build().forCreation())
                 .isInstanceOf(DomainValidationException.class);
-        assertThatThrownBy(() -> WasteCollection.builder().weightKg(-1).build().forCreation())
+        assertThatThrownBy(() -> waste().weightKg(-1).build().forCreation())
                 .isInstanceOf(DomainValidationException.class);
-        assertThatThrownBy(() -> DiversityReport.builder().reportingMonth("2026-13").build().forCreation())
+        assertThatThrownBy(() -> diversity().reportingMonth("2026-13").build().forCreation())
+                .isInstanceOf(DomainValidationException.class);
+    }
+
+    @Test
+    void reportingQuarterHasCanonicalValueSemantics() {
+        assertThat(ReportingQuarter.parse("2026-Q3")).isEqualTo(new ReportingQuarter(2026, 3));
+        assertThat(ReportingQuarter.parse("2026-Q3").toString()).isEqualTo("2026-Q3");
+        assertThatThrownBy(() -> ReportingQuarter.parse("2026-Q5"))
+                .isInstanceOf(DomainValidationException.class);
+        assertThatThrownBy(() -> new ReportingQuarter(2026, 0))
                 .isInstanceOf(DomainValidationException.class);
     }
 
     @Test
     void licenseExpirationIsCalculatedAtReadTime() {
-        EnvironmentalLicense stored = EnvironmentalLicense.builder().issueDate(NOW.minusSeconds(60))
+        EnvironmentalLicense stored = license().issueDate(NOW.minusSeconds(60))
                 .expirationDate(NOW).status(LicenseStatus.ACTIVE).build();
         assertThat(stored.withEffectiveStatusAt(NOW.plusNanos(1)).getStatus()).isEqualTo(LicenseStatus.EXPIRED);
         assertThat(stored.getStatus()).isEqualTo(LicenseStatus.ACTIVE);

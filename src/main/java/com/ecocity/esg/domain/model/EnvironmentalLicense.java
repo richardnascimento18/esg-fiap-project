@@ -66,6 +66,10 @@ public final class EnvironmentalLicense {
     }
 
     public void validate() {
+        DomainRules.requiredText(licenseNumber, "licenseNumber");
+        DomainRules.requiredText(facility, "facility");
+        DomainRules.required(licenseType, "licenseType");
+        DomainRules.requiredText(issuingAuthority, "issuingAuthority");
         if (issueDate == null || expirationDate == null) {
             throw new DomainValidationException("issueDate e expirationDate sao obrigatorios");
         }

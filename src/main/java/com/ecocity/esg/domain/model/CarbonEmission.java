@@ -17,7 +17,7 @@ public final class CarbonEmission {
     private final double emissionTonnes;
     private final double compensationTonnes;
     private final boolean compensated;
-    private final String reportingPeriod;
+    private final ReportingQuarter reportingPeriod;
     private final String auditedBy;
 
     // The builder also restores stored state; write operations below apply business rules.
@@ -29,7 +29,7 @@ public final class CarbonEmission {
             double emissionTonnes,
             double compensationTonnes,
             boolean compensated,
-            String reportingPeriod,
+            ReportingQuarter reportingPeriod,
             String auditedBy) {
         this.id = id;
         this.version = version;
@@ -53,8 +53,11 @@ public final class CarbonEmission {
     }
 
     public void validate() {
+        DomainRules.requiredText(sourceFacility, "sourceFacility");
+        DomainRules.required(emissionType, "emissionType");
+        DomainRules.requiredText(auditedBy, "auditedBy");
         DomainRules.nonNegative(emissionTonnes, "emissionTonnes");
         DomainRules.nonNegative(compensationTonnes, "compensationTonnes");
-        DomainRules.reportingQuarter(reportingPeriod);
+        DomainRules.required(reportingPeriod, "reportingPeriod");
     }
 }

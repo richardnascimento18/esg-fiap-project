@@ -39,7 +39,7 @@ class CarbonEmissionServiceTest {
                 .emissionType(EmissionType.CO2)
                 .emissionTonnes(emission)
                 .compensationTonnes(compensation)
-                .reportingPeriod("2026-Q3")
+                .reportingPeriod(com.ecocity.esg.domain.model.ReportingQuarter.parse("2026-Q3"))
                 .auditedBy("Auditoria Ambiental Municipal")
                 .build();
     }
