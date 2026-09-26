@@ -17,7 +17,8 @@ class IdempotentCreateTest {
     private static final String URL = "/api/v1/energy-consumptions";
     private static final String BODY = """
             {"facilityId":"F1","facilityName":"Facility","city":"City","sourceType":"SOLAR",
-             "consumptionKwh":10,"thresholdKwh":20,"readingTimestamp":"2026-01-01T00:00:00Z"}
+             "consumptionKwh":10,"thresholdKwh":20,"readingTimestamp":"2026-01-01T00:00:00Z",
+             "sensorMetadata":{"sensor":"A","nested":{"region":"north","floor":2}}}
             """;
 
     @Test
@@ -26,8 +27,10 @@ class IdempotentCreateTest {
         var first = mvc.perform(post(URL).header("Idempotency-Key", key)
                 .contentType("application/json").content(BODY)).andExpect(status().isCreated())
                 .andReturn().getResponse();
+        String reordered = BODY.replace("\"sensor\":\"A\",\"nested\":{\"region\":\"north\",\"floor\":2}",
+                "\"nested\":{\"floor\":2,\"region\":\"north\"},\"sensor\":\"A\"");
         var retry = mvc.perform(post(URL).header("Idempotency-Key", key)
-                .contentType("application/json").content(BODY)).andExpect(status().isCreated())
+                .contentType("application/json").content(reordered)).andExpect(status().isCreated())
                 .andReturn().getResponse();
         assertThat(mapper.readTree(retry.getContentAsString()).path("id"))
                 .isEqualTo(mapper.readTree(first.getContentAsString()).path("id"));
