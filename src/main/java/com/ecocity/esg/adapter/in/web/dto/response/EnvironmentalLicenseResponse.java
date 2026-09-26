@@ -23,7 +23,7 @@ public class EnvironmentalLicenseResponse {
     private String licenseNumber;
     private String facility;
     private LicenseType licenseType;
-    @Schema(description = "Estado calculado na gravação. Consultas retornam o estado armazenado.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "Estado efetivo calculado na consulta; pode mudar com o tempo sem alterar a versão do documento MongoDB.", accessMode = Schema.AccessMode.READ_ONLY)
     private LicenseStatus status;
     private Instant issueDate;
     private Instant expirationDate;
