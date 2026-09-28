@@ -133,6 +133,7 @@ jobs:
   deploy_staging:
     name: Deploy tested digest to staging Azure
     needs: [publish, smoke]
+    if: vars.AZURE_DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-24.04
     environment: staging
     permissions:
