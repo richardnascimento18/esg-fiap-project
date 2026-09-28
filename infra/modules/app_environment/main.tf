@@ -98,14 +98,20 @@ resource "azurerm_container_app_environment" "app" {
   }
 }
 
-resource "azapi_update_resource" "environment_mode" {
+resource "azapi_resource_action" "environment_mode" {
   type        = "Microsoft.App/managedEnvironments@2026-07-01"
   resource_id = azurerm_container_app_environment.app.id
+  method      = "PATCH"
 
   body = {
+    location = var.location
     properties = {
       environmentMode = "WorkloadProfiles"
     }
+  }
+
+  lifecycle {
+    replace_triggered_by = [azurerm_container_app_environment.app]
   }
 }
 
@@ -216,7 +222,7 @@ resource "azurerm_container_app" "app" {
     ignore_changes = [template[0].container[0].image]
   }
 
-  depends_on = [azapi_update_resource.environment_mode, time_sleep.vault_rbac]
+  depends_on = [azapi_resource_action.environment_mode, time_sleep.vault_rbac]
 }
 
 resource "azurerm_role_assignment" "deploy_app" {
