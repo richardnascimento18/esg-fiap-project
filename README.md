@@ -117,11 +117,41 @@ O perfil base deixa o agendamento desligado (`APP_LICENSE_ALERT_CRON=-`). Se ati
 
 Os testes de integração usam Testcontainers com MongoDB 7 e precisam de Docker disponível. `verify` executa as fases de teste e integração do Maven, além do SpotBugs com limite para achados de prioridade alta. Os testes ArchUnit verificam dependências entre camadas. O Wrapper fixa Maven 3.9.9.
 
-## Contêineres e CI/CD
+## Containerização
 
-O Dockerfile constrói o JAR em uma etapa Maven e executa a aplicação em uma imagem Java 21 sem usuário root. Em PRs para `staging` e `production`, o CI roda `./mvnw clean verify` e constrói a imagem; PRs para `production` devem vir da branch `staging` deste repositório.
+Trechos do `Dockerfile`:
+
+```dockerfile
+FROM maven:3.9.9-eclipse-temurin-21 AS build
+WORKDIR /workspace
+COPY pom.xml ./
+RUN mvn -B -q dependency:go-offline
+COPY src ./src
+RUN mvn -B -q package -DskipTests
+```
+
+```dockerfile
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+RUN addgroup -S ecocity && adduser -S -G ecocity ecocity
+COPY --from=build --chown=ecocity:ecocity /workspace/target/ecocity-esg.jar app.jar
+USER ecocity
+```
+
+A primeira etapa gera o JAR com Maven e Java 21; a imagem final usa apenas o runtime Java 21, copia o artefato com a propriedade do usuário `ecocity` e executa sem root. O Dockerfile também define uma verificação de saúde para o endpoint de readiness.
+
+## CI/CD
+
+Em PRs para `staging` e `production`, o CI roda `./mvnw clean verify` e constrói a imagem; PRs para `production` devem vir da branch `staging` deste repositório.
 
 Em push para `staging`, o workflow verifica o projeto, publica no GHCR uma tag imutável `sha-<SHA completo>` e, em um runner novo, baixa o digest publicado para um smoke test com MongoDB. Se a tag já existe, reutiliza seu digest sem reconstrução. Após merge de `staging` em `production`, a promoção usa esse mesmo manifesto, atualiza o alias `:production` e verifica igualdade dos digests, sem novo build. Os jobs de implantação Azure usam GitHub OIDC, sem segredo estático de cliente Azure.
+
+## Evidências de funcionamento
+
+- [Staging: publicação, smoke test e implantação bem-sucedidos](https://github.com/richardnascimento18/esg-fiap-project/actions/runs/36440713825).
+- [Produção: promoção do artefato testado e implantação bem-sucedidas](https://github.com/richardnascimento18/esg-fiap-project/actions/runs/36442214647).
+
+Essas execuções documentam a validação dos ambientes de staging e produção. A infraestrutura Azure foi intencionalmente destruída após a validação e coleta das evidências; os jobs atuais de implantação Azure ficam desabilitados/ignorados por decisão de ciclo de vida, sem indicar disponibilidade atual da nuvem.
 
 ## Reprodução no Azure
 
