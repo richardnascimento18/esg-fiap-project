@@ -129,3 +129,28 @@ jobs:
         run: |
           printf '### GHCR round-trip passed\n\n- Commit: `%s`\n- Pulled artifact: `%s@%s`\n- Readiness: HTTP 200\n- Unauthenticated write: HTTP 401\n- Authenticated create: HTTP 201\n' \
             "$GITHUB_SHA" "$IMAGE" "$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy_staging:
+    name: Deploy tested digest to staging Azure
+    needs: [publish, smoke]
+    runs-on: ubuntu-24.04
+    environment: staging
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Login to staging Azure with OIDC
+        uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy and verify staging Container App
+        env:
+          IMAGE: ${{ needs.publish.outputs.image }}
+          DIGEST: ${{ needs.publish.outputs.digest }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: bash scripts/ci/deploy-azure-containerapp.sh staging rg-ecocity-stg ca-ecocity-stg "$IMAGE@$DIGEST" "$SOURCE_SHA"
