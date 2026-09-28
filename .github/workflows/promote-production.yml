@@ -71,6 +71,7 @@ jobs:
   deploy_production:
     name: Deploy promoted digest to production Azure
     needs: promote
+    if: vars.AZURE_DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-24.04
     environment: production
     permissions:
