@@ -40,7 +40,7 @@ resource "azurerm_federated_identity_credential" "github" {
   user_assigned_identity_id = azurerm_user_assigned_identity.deploy.id
   issuer                    = "https://token.actions.githubusercontent.com"
   audience                  = ["api://AzureADTokenExchange"]
-  subject                   = "repo:richardnascimento18/esg-fiap-project:environment:${var.environment}"
+  subject                   = "repo:${var.github_oidc_repository_subject}:environment:${var.environment}"
 }
 
 resource "azurerm_key_vault" "app" {
@@ -120,6 +120,7 @@ resource "azurerm_container_app" "app" {
   container_app_environment_id = azurerm_container_app_environment.app.id
   resource_group_name          = var.resource_group_name
   revision_mode                = "Single"
+  workload_profile_name        = "Consumption"
   tags                         = var.tags
 
   identity {
