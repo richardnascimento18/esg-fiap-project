@@ -24,6 +24,10 @@ jobs:
       contents: read
       actions: read
       packages: write
+    outputs:
+      image: ${{ steps.source.outputs.image }}
+      source_sha: ${{ steps.source.outputs.source_sha }}
+      digest: ${{ steps.alias.outputs.digest }}
     steps:
       - name: Confirm staging publication and compute image
         id: source
@@ -47,6 +51,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
       - name: Alias exact existing manifest and verify digest
+        id: alias
         env:
           IMAGE: ${{ steps.source.outputs.image }}
           SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
@@ -59,5 +64,31 @@ jobs:
           docker buildx imagetools create --prefer-index=false --tag "$alias" "$IMAGE@$source_digest"
           production_digest=$(docker buildx imagetools inspect "$alias" --format '{{json .Manifest}}' | jq -er .digest)
           test "$source_digest" = "$production_digest"
+          echo "digest=$source_digest" >> "$GITHUB_OUTPUT"
           printf '### Production artifact promotion\n\n- Staging source commit: `%s`\n- Immutable image: `%s`\n- Source digest: `%s`\n- Production alias: `%s`\n- Production digest: `%s`\n- Digest equality: **true**\n' \
             "$SOURCE_SHA" "$immutable" "$source_digest" "$alias" "$production_digest" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy_production:
+    name: Deploy promoted digest to production Azure
+    needs: promote
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Login to production Azure with OIDC
+        uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy and verify production Container App
+        env:
+          IMAGE: ${{ needs.promote.outputs.image }}
+          DIGEST: ${{ needs.promote.outputs.digest }}
+          SOURCE_SHA: ${{ needs.promote.outputs.source_sha }}
+        run: bash scripts/ci/deploy-azure-containerapp.sh production rg-ecocity-prod ca-ecocity-prod "$IMAGE@$DIGEST" "$SOURCE_SHA"

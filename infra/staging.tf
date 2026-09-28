@@ -1,0 +1,23 @@
+resource "azurerm_resource_group" "staging" {
+  name     = "rg-ecocity-stg"
+  location = var.location
+  tags     = merge(local.common_tags, { environment = "staging" })
+}
+
+module "staging" {
+  source                         = "./modules/app_environment"
+  environment                    = "staging"
+  github_oidc_repository_subject = local.github_oidc_repository_subject
+  resource_group_name            = azurerm_resource_group.staging.name
+  location                       = azurerm_resource_group.staging.location
+  tenant_id                      = data.azurerm_client_config.current.tenant_id
+  provisioning_principal_id      = data.azurerm_client_config.current.object_id
+  log_analytics_workspace_id     = azurerm_log_analytics_workspace.shared.id
+  mongo_connection_uri           = azurerm_mongo_cluster.shared.connection_strings[0].value
+  mongo_database                 = "ecocity_staging"
+  image                          = local.image
+  deployment_role_definition_id  = azurerm_role_definition.app_deploy.role_definition_resource_id
+  tags                           = merge(local.common_tags, { environment = "staging" })
+
+  depends_on = [azurerm_mongo_cluster_firewall_rule.azure_services]
+}
