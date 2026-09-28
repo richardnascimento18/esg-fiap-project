@@ -98,6 +98,17 @@ resource "azurerm_container_app_environment" "app" {
   }
 }
 
+resource "azapi_update_resource" "environment_mode" {
+  type        = "Microsoft.App/managedEnvironments@2026-07-01"
+  resource_id = azurerm_container_app_environment.app.id
+
+  body = {
+    properties = {
+      environmentMode = "WorkloadProfiles"
+    }
+  }
+}
+
 resource "azurerm_container_app" "app" {
   name                         = "ca-ecocity-${local.short_name}"
   container_app_environment_id = azurerm_container_app_environment.app.id
@@ -205,7 +216,7 @@ resource "azurerm_container_app" "app" {
     ignore_changes = [template[0].container[0].image]
   }
 
-  depends_on = [time_sleep.vault_rbac]
+  depends_on = [azapi_update_resource.environment_mode, time_sleep.vault_rbac]
 }
 
 resource "azurerm_role_assignment" "deploy_app" {
